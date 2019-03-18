@@ -1,6 +1,3 @@
 
-*.mat
-*.mat
-*.mat
-*.mat
-output/random_scatter_TwIST_TV_result.mat
+data/*.mat
+output/*.mat
