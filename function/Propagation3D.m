@@ -1,7 +1,7 @@
 %{
-    Propagate 3D volume field to a single plane
+    Propagate a 3D volume field to a single plane
 %}
-function plane_field = Propagation3D(vol_field, otf3d, pupil3d)
+function plane_field = Propagation3D(vol_field, otf3d, pupil3d, holo_type)
     
     [Ny, Nx, ~] = size(otf3d);
 
@@ -14,4 +14,17 @@ function plane_field = Propagation3D(vol_field, otf3d, pupil3d)
   
     plane_field_ft = sum(vol_field_ft.*otf3d.*pupil3d, 3);  % intergration along z axis
     plane_field = ifftshift(ifft2(fftshift(plane_field_ft)));
+
+    if nargin>3 && strcmp(holo_type, 'inline')
+        %{
+          Gabor hologram: I = |R|^2 + |O|^2 + R*O + RO*
+          Substract background: I_prime = |O|^2 + R*O + RO* = 2 real(O) + |O|^2 = 2 real(O) + err
+        %}
+        plane_field = 2*real(plane_field);
+    end
+
+%     % Filter
+%     sigma = 1;
+%     gausFilter = fspecial('gaussian', [3,3], sigma);
+%     plane_field = imfilter(plane_field, gausFilter, 'replicate');
 end

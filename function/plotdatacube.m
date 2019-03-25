@@ -4,10 +4,10 @@ function spatialcube = plotdatacube(data)
 
     [Ny, Nx, Nz] = size(data);
     
-    if Nz>=20
+    if Nz>=10
         cols = 10;
     else
-        cols = 5;
+        cols = Nz;
     end
     
     rows = ceil(Nz/cols);

@@ -13,20 +13,20 @@ meet the original z, different deltax may be used in the reconstruction
 % data size
 Nx = 500;
 Ny = 500;
-Nz = 24;  % 85~110
+Nz = 8;  % 85~110
 
 % wavelength (um), 632nm
-lambda = 632.8e-3;  % Need to confirm
+lambda = 632.8e-9;  % Need to confirm
 
-sensor_size = 1e4; % size of detector (um), 1cm used in HKU reconstruction
+sensor_size = 10e-3; % size of detector (um), 1cm used in HKU reconstruction
 
 pps = sensor_size/Nx;   
 deltaX = pps;
 deltaY = pps;
 
-deltaZ = 2e4;  % distance between each axial plane (um)
+deltaZ = 8e-2;  % distance between each axial plane (um)
 
-offsetZ = 77e4;
+offsetZ = 77e-2;
 z_scope = offsetZ - ((1:Nz)- round(Nz/2))*deltaZ 
 
 
