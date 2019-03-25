@@ -1,22 +1,20 @@
 function [x, x_debias, objective, times, debias_start, mses, max_svd] = TwIST(y, A, tau, varargin)
 %{
 This function solves the regularization problem 
-    arg min_x = 0.5*|| y - A x ||_2^2 + tau phi( x ), 
+    arg min_x = 0.5*||y - A x||_2^2 + tau phi(x), 
 where A is a generic matrix and phi(.) is a regularizarion function such that the solution of the 
 denoising problem 
-    Psi_tau(y) = arg min_x = 0.5*|| y - x ||_2^2 + tau \phi( x ), 
+    Psi_tau(y) = arg min_x = 0.5*||y - x||_2^2 + tau \phi(x), 
 is known. 
-
+----------------------------------------------------------------------------------------------------
 For further details about the TwIST algorithm, see the paper:
-- J. Bioucas-Dias and M. Figueiredo, "A New TwIST: Two-Step Iterative Shrinkage/Thresholding Algorithms 
+- J. Bioucas-Dias, M. Figueiredo, "A New TwIST: Two-Step Iterative Shrinkage/Thresholding Algorithms 
   for Image Restoration", IEEE Transactions on Image processing, 2007.
-- J. Bioucas-Dias and M. Figueiredo, "A Monotonic Two-Step Algorithm for Compressive Sensing and Other
+- J. Bioucas-Dias, M. Figueiredo, "A Monotonic Two-Step Algorithm for Compressive Sensing and Other
   Ill-Posed Inverse Problems", submitted, 2007.
 
 Authors: Jose Bioucas-Dias and Mario Figueiredo, October, 2007.
-
 Please check for the latest version of the code and papers at www.lx.it.pt/~bioucas/TwIST
-
 ----------------------------------------------------------------------------------------------------
 Copyright (2007): Jose Bioucas-Dias and Mario Figueiredo
 
@@ -45,7 +43,7 @@ this software or its fitness for any particular purpose."
 
  tau: regularization parameter, usually a non-negative real parameter of the objective function(see above). 
 
- ===== Optional inputs =============
+========================================== Optional inputs =========================================
 
  'Psi' = denoising function handle; handle to denoising function
          Default = soft threshold.
@@ -66,17 +64,16 @@ this software or its fitness for any particular purpose."
 
             Important Note: If (max eigenvalue of A'*A) > 1, the algorithm may diverge. This is be 
             avoided by taking one of the follwoing  measures:
-
                1) Set 'Monontone' = 1 (default)
                2) Solve the equivalenve minimization problem
 
             min_x = 0.5*|| (y/c) - (A/c) x ||_2^2 + (tau/c^2) \phi( x ), where c > 0 ensures that 
             max eigenvalue of (A'A/c^2) <= 1.
 
-  'alpha' = parameter alpha of TwIST (see ex. (22) of the paper)         
+ 'alpha' = parameter alpha of TwIST (see ex. (22) of the paper)         
             Default alpha = alpha(lamN=1, lam1)
 
-  'beta'  =  parameter beta of twist (see ex. (23) of the paper)
+ 'beta'  =  parameter beta of twist (see ex. (23) of the paper)
              Default beta = beta(lamN=1, lam1)            
 
  'AT'    = function handle for the function that implements the multiplication by the conjugate of A,
@@ -95,13 +92,10 @@ this software or its fitness for any particular purpose."
 
  'Debias'     = debiasing option: 1 = yes, 0 = no.
                 Default = 0.
-
                 Note: Debiasing is an operation aimed at the computing the solution of the LS problem 
                         arg min_x = 0.5*|| y - A' x' ||_2^2 
-
                 where A' is the  submatrix of A obatained by deleting the columns of A corresponding
                 of components of x set to zero by the TwIST algorithm
-
 
  'ToleranceD' = stopping threshold for the debiasing phase:
                 Default = 0.0001.
@@ -139,8 +133,7 @@ this software or its fitness for any particular purpose."
 
  'Verbose'  = work silently (0) or verbosely (1)
 
-===================================================  
-============ Outputs ==============================
+  ========================================= Outputs ================================================
   x = solution of the main algorithm
 
   x_debias = solution after the debiasing phase; if no debiasing phase took place, this variable is 
@@ -158,7 +151,7 @@ this software or its fitness for any particular purpose."
 
   max_svd = inverse of the scaling factor, determined by TwIST, applied to the direct operator 
             (A/max_svd) such that every IST step is increasing.
-==============================================================================================
+====================================================================================================
 %}
 
     %--------------------------------------------------------------
@@ -170,14 +163,14 @@ this software or its fitness for any particular purpose."
     %--------------------------------------------------------------
     % Set the defaults for the optional parameters
     %--------------------------------------------------------------
-    stopCriterion = 1;
+    stopCriterion = 3;
     tolA = 0.01;
     debias = 0;
     maxiter = 1000;
     maxiter_debias = 200;
     miniter = 5;
     miniter_debias = 5;
-    init = 0;
+    init = 2;
     enforceMonotone = 1;
     compute_mse = 0;
     plot_ISNR = 0;

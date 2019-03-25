@@ -11,12 +11,12 @@ load('dandelion.mat');
 pixel_num = 1024;
 
 % size of detector pixels (um)
-pps = 5.2;
+pps = 5.2e-6;
 
-lambda = 0.6328;  % wavelength (um)
+lambda = 632.8e-9;  % wavelength (um)
 
-deltaZ = 5000;  % distance between each axial plane (um)
-offsetZ = 35000;  % distance from detector to first reconstructed plane (um)
+deltaZ = 5e-3;  % distance between each axial plane (um)
+offsetZ = 35e-3;  % distance from detector to first reconstructed plane (um)
 
 Nz = 12;   % number of axial planes, should cover the depth range
 

@@ -29,21 +29,21 @@ load('beads.mat');
 
 Nz = 14;
 
-lambda = 532e-3;  % wavelength (um)
+lambda = 532e-9;  % wavelength (um)
 
-% sensor_size = 140/(20*(1/60));  % size of detector (um)
-sensor_size = 105/(20*(1/60));    % size of detector (um), FOV/M
+% sensor_size = 140e-6/(20*(1/60));  % size of detector (um)
+sensor_size = 105e-6/(20*(1/60));    % size of detector (um), FOV/M
 pps = sensor_size/Nx_ori
 deltaX = pps;
 deltaY = pps;
 
-deltaZ = 5;  % distance between each axial plane (um)
-offsetZ = 100;  % distance from detector to center of the object plane (um)
+deltaZ = 5e-6;  % distance between each axial plane (um)
+offsetZ = 105e-6;  % distance from detector to center of the object plane (um)
 
 z_scope = offsetZ - ((1:Nz)- round(Nz/2))*deltaZ
 
 %% ========================================== Crop =================================================
-N_crop = 1500;
+N_crop = 512;
 Nx = N_crop;
 Ny = N_crop;
 
