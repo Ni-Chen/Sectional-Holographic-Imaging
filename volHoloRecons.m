@@ -15,83 +15,106 @@ close all; clear; clc;
 
 FT2 = @(x) ifftshift(fft2(fftshift(x)));
 iFT2 = @(x) ifftshift(ifft2(fftshift(x)));
+
+FT = @(x) ifftshift(fft(fftshift(x)));
+iFT = @(x) ifftshift(ifft(fftshift(x)));
+
 %% ====================================== Parameters ===============================================
-addpath('./function/');
+addpath(genpath('./function/'));  % Add funtion path with sub-folders
 
-indir = './data/';
-outdir = './output/';
+indir = './data/';  % Hologram data
+% outdir = './output/';  % Output files
+outdir = './Gabor/figure/';  % Output files
 
-% Simulation: geo, geo_overlap, random_scatter, helix_conical, helix_circular, SNUE
-% Experiment: dandelion, sh, beads, res
-obj_name = 'SNUE';
-issim = 1; % Simulation
+% Simulations: random, geo, overlap, cirhelix, conhelix, SNUE
+% Experiments: dandelion, sh, beads, res
+obj_name = 'overlap';
+holo_type = 'inline';  % complex; inline; offline;
 
-holo_type = 'inline';  % complex (OSH, phase-shifting); inline; offline;
+% Deconvolution setting
+iter_num = 1000;
+regu_type = 'TV';  % 'TV', 'L1'
+deconv_type = 'TwIST';  % 'TwIST','GPSR', TVAL3, SALSA, NESTA, TVPD
 
-regu = 'TV'; % 'TV', 'L1'
-deconv_type = 'TwIST';  % 'TwIST', 'GPSR', SALSA
-
-iter_num = 200;
-
-isWrite2DRecon = 0;
-isWriteEPS = 0;
+% Output setting
+isDebug = 0;
 
 %% ======================================= Hologram ================================================
-load([indir, obj_name, '.mat']);
-if(issim)
-    load([indir, obj_name, '_conv_holo.mat']); 
+run([indir, obj_name, '_param.m']);  % Parameters of the object and hologram 
+[otf3d, psf3d, pupil3d] = OTF3D(Ny, Nx, Nz, lambda, deltaX, deltaY, deltaZ, offsetZ, sensor_size);
+
+if any(strcmp(obj_name, {'geo', 'overlap', 'random', 'conhelix', 'cirhelix', 'SNUE'}))
+% Simulation data
+    issim = 1;    
+    load([indir, obj_name, '_3d.mat']);
+    vol3d_vec = C2V(obj3d(:));  % For calculating MSE
+    
+    prop_field = Propagation3D(obj3d, otf3d, pupil3d);  % Field at the center plane of the 3D object
+    
+    switch holo_type
+        case 'complex'
+            holo = prop_field;
+        case 'inline'
+            %{
+              Inline hologram, I = |R|^2 + OR* + O*R + |O|^2, |R|^2 can be captured directly, 
+              OR* + O*R + |O|^2 = iFT(FT(I) - FT(|R|^2 )), suppose |R|=1, real(OR* + O*R)=2real(O)
+            %}
+            holo = prop_field + conj(prop_field) + sum(obj3d.^2,3)/Nz; 
+%             holo = prop_field + conj(prop_field);  % in weak object case
+        case 'offline'
+    end
+    
+    % add noise
+%     holo = imnoise(holo, 'gaussian', 0, 0.001);
+    holo = awgn(holo, 40);
+    
+    out_filename = [outdir, obj_name, '_', holo_type , '_'];
+else
+% Experimental data
+    issim = 0;
+    temp = zeros(Ny, Nx, Nz);
+    vol3d_vec = C2V(temp(:));  % Experiments have no reference object, just for coding convenience
+   
+    out_filename = [outdir, obj_name, '_'];
 end
-run([indir, obj_name, '_param.m']);
 
-holo = holo./max(max(abs(holo)));
+holo = holo./max(max(abs(holo)));  % Normalization
 
-% Filter
-% sigma = 1;
-% gausFilter = fspecial('gaussian', [3,3], sigma);
-% holo = imfilter(holo, gausFilter, 'replicate');
-
-switch holo_type
-    case 'inline'
-        %{
-          For inline hologram, I = |R|^2 + OR* + O*R + |O|^2, |R|^2 can be captured directly, and
-          eliminated by I_prime = iFT(FT(I) - FT(|R|^2 )).
-        %}
-%         holo = holo + conj(holo) + sum(obj3d.^2,3)/Nz;  % hologram without |R|^2, suppose |R|=1
-        holo = holo + conj(holo);  % in weak object case, = 2real(O),
-    case 'offline'
-end
-
-%% ============================== Construst Minimization problem ===================================
-[otf3d, psf3d, Pupil] = OTF3D(Ny, Nx, Nz, lambda, deltaX, deltaY, deltaZ, offsetZ, sensor_size);
-A_fun = @(vol3d) Propagation(vol3d, otf3d, Pupil, holo_type);
-AT_fun = @(field2d) iPropagation(field2d, otf3d, Pupil, holo_type);
+% holo = holodenoise(holo); % Filter noise    
+% sigma = noiseAnalysis(holo)
 
 %% ========================== Reconstruction with back-propagation =================================
-reobj_raw = iPropagation3D(holo, otf3d, Pupil, holo_type);
+reobj_raw = iMatProp3D(holo, otf3d, pupil3d, holo_type);
 % write3d(abs(reobj_raw), z_scope*1e9, outdir, obj_name);
 
-%% ============================= Reconstruction with deconvolution =================================
+%% ============= Construct Minimization problem and Reconstruction with deconvolution ==============
+A_fun = @(field3d_vec) VecProp3D(field3d_vec, otf3d, pupil3d, holo_type);
+AT_fun = @(field2d_vec) iVecProp3D(field2d_vec, otf3d, pupil3d, holo_type);
+
 Nyv = Ny;
 Nxv = Nx*Nz*2;  %!!!!
 Nzv = 1;
+
+% Nyv = 2*Ny;
+% Nxv = Nx;  %!!!!
+% Nzv = Nz;
+
+% Nyv = Ny;
+% Nxv = Nx*2;  %!!!!
+% Nzv = Nz;
 
 % Since the TV-based denoising term is not defined in a complex domain, the real and imaginary parts
 % are independently processed in a vectorized form.
 holo_vec = C2V(holo(:));
 
-if issim
-    vol3d_vec = C2V(obj3d(:));
-else
-    temp = zeros(Ny, Nx, Nz);
-    vol3d_vec = C2V(temp(:));
-end
-
 switch deconv_type
-    case 'TwIST'  % gold but slowly
-        tau = 0.05;   % need an estamation function
+    case 'TwIST'  % works for both complex and inline holograms, but very slowly
+        tau = 0.01;   % This effects, need further investigation
+%         sigma = evar(holo_vec);  % This effects
+%         tau = sigma
         tolA = 1e-6;
         
-        if strcmp(regu, 'L1')
+        if strcmp(regu_type, 'L1')
             Phi_fun = @(vol3d, weight, epsi) L1phi(vol3d);
             
             [reobj_TwIST, ~, objective, times, ~, mses] = TwIST(holo_vec, A_fun, tau, ...
@@ -101,7 +124,7 @@ switch deconv_type
                 'ToleranceA', tolA, ...
                 'TRUE_X', vol3d_vec);
             
-        elseif strcmp(regu, 'TV')
+        elseif strcmp(regu_type, 'TV')
             Phi_fun = @(vol3d) TVphi(vol3d, Nyv, Nxv, Nzv);
             piter = 5;
             Psi_fun = @(vol3d, th) TVpsi(vol3d, th, tau, piter, Nyv, Nxv, Nzv);
@@ -119,24 +142,79 @@ switch deconv_type
         reobj_deconv = reobj_TwIST;
         
     case 'GPSR' % works but not for overlapping
-        tau = 0.01;
-        tolA = 1e-6;
-        [reobj_SALSA, objective, obj_gpsr, times, debias_s, mses] = GPSR_Basic(holo_vec, A_fun, tau,...
+        tau = 0.05;  % regularization parameter
+        tolA = 1e-6; % stopping threshold
+        [reobj_SALSA, reobj_debias, obj_gpsr, times, debias_s, mses] = GPSR_BB(holo_vec, A_fun, tau,...
             'Debias', 1, ...
             'AT', AT_fun,...
+            'Continuation', 1, ...
             'ToleranceA', tolA, ...
             'MaxIterA', iter_num, ...
             'TRUE_X', vol3d_vec);
         
         reobj_SALSA = reshape(V2C(reobj_SALSA), Ny, Nx, Nz);
         reobj_deconv = reobj_SALSA;
+        
+    case 'TVPD' % works but not for overlapping
+        tau = 0.01;  % regularization parameter
+        tolA = 1e-6; % stopping threshold
+        
+        otf3d_vec = C2V(otf3d(:));
+        reobj_TVPD = tvpd(otf3d_vec, holo_vec, Nx, vol3d_vec, 2, 10,10, 20); %total variation regularization
+%         [reobj_SALSA, reobj_debias, obj_gpsr, times, debias_s, mses] = GPSR_BB(holo_vec, A_fun, tau,...
+%             'Debias', 1, ...
+%             'AT', AT_fun,...
+%             'Continuation', 1, ...
+%             'ToleranceA', tolA, ...
+%             'MaxIterA', iter_num, ...
+%             'TRUE_X', vol3d_vec);
+        
+        reobj_TVPD = reshape(V2C(reobj_TVPD), Ny, Nx, Nz);
+        reobj_deconv = reobj_TVPD;
+     case 'TVAL3' % works but not for overlapping
+        opts.mu = 2^5;
+        opts.beta = 2^5;
+        opts.tol = 1e-3;
+        opts.maxit = iter_num;
+        opts.TVnorm = 1;
+        opts.nonneg = true;
+
+        A_fun = @(vol3d) vecProp(vol3d, otf3d, pupil3d, holo_type);
+        AT_fun = @(field2d) ivecProp(field2d, otf3d, pupil3d, holo_type);
+
+        [reobj_TVAL, out]= TVAL3(A_fun, holo_vec,  Nyv*Nxv*2, 1, opts);
+                
+        reobj_TVAL = reshape(V2C(reobj_TVAL), Ny, Nx, Nz);
+        reobj_deconv = reobj_TVAL;
+        
+    case 'NESTA' % works but not for overlapping
+        delta = 0;
+        mu = 1e-3;
+        cg_tol = 1e-6; 
+        cg_maxit = 40;
+        CGwrapper(); % (first, zero-out the CGwrapper counters)
+
+        A_fun = @(vol3d) vecProp(vol3d, otf3d, pupil3d, holo_type);
+        AT_fun = @(field2d) ivecProp(field2d, otf3d, pupil3d, holo_type);
+        
+        opts = [];
+        opts.Verbose = 10;
+        opts.TolVar = 1e-4;
+        opts.AAtinv = @(b) CGwrapper(A_fun, b, cg_tol, cg_maxit);
+        opts.typemin = 'tv';
+
+        [reobj_NESTA, niter, resid, mses] = NESTA(A_fun, AT_fun, holo_vec, mu, delta, opts);
+                
+        reobj_NESTA = reshape(V2C(reobj_NESTA), Ny, Nx, Nz);
+        reobj_deconv = reobj_NESTA;
+        
     case 'SALSA'  % not working
-        A_fun = @(vol3d) Propagation(vol3d, otf3d, Pupil, holo_type);
-        AT_fun = @(field2d) iPropagation(field2d, otf3d, Pupil, holo_type);
+        A_fun = @(vol3d) vecProp(vol3d, otf3d, pupil3d, holo_type);
+        AT_fun = @(field2d) ivecProp(field2d, otf3d, pupil3d, holo_type);
         
         %{
         reg parameter, extreme eigenvalues, rule of thumb:
-        1e-4: severyly ill-conditioned problems
+        1e-4: severely ill-conditioned problems
         1e-1: mildly  ill-conditioned problems
         1:    when A = Unitary matrix
         %}
@@ -148,7 +226,7 @@ switch deconv_type
         otf3dvec = C2V(otf3d(:));
         filter_FFT = 1./(abs(otf3dvec) + mu);
         
-        invLS = @(x) real(ifftshift(ifft(fftshift(filter_FFT.*ifftshift(fft(fftshift(x)))))));  % ????
+        invLS = @(x) real(iFT(filter_FFT.*FT(x)));  % ????
         invLS = @(x) callcounter(invLS, x);
         
         Psi_fun = @(vol3d, th) TVpsi(vol3d, tau, tolA, 10, Nyv, Nxv, Nzv);
@@ -169,8 +247,8 @@ switch deconv_type
         reobj_deconv = reobj_salsa;
         
     case 'CSALSA' % not working
-        A_fun = @(vol3d) Propagation(vol3d, otf3d, Pupil, holo_type);
-        AT_fun = @(field2d) iPropagation(field2d, otf3d, Pupil, holo_type);
+        A_fun = @(vol3d) vecProp(vol3d, otf3d, pupil3d, holo_type);
+        AT_fun = @(field2d) ivecProp(field2d, otf3d, pupil3d, holo_type);
         
         tolA = 1e-10;
         
@@ -221,41 +299,75 @@ switch deconv_type
         
 end
 
-% save([outdir, obj_name, '_', deconv_type ,'_result.mat'], 'reobj_raw', 'reobj_deconv', 'iter_num', 'mse_twist');
 
 %% ======================================= Show the images =========================================
 % figure; imagesc(plotdatacube(real(otf3d)));title('OTF');axis image;drawnow;colorbar;
 % print('-dpng', [outdir, obj_name, '_', 'otf', num2str(deltaZ), '.png']);
 % figure; imagesc(plotdatacube(abs(psf3d)));title('PSF');axis image;drawnow;colorbar;
 % figure; imagesc(plotdatacube(real(E)));title('E');axis image;drawnow;colorbar;
-figure; semilogy(times, objective, 'LineWidth',2); ylabel('objective distance'); xlabel('CPU time (sec)');
-figure; plot(times, mses, 'LineWidth',2); ylabel('MSE'); xlabel('CPU time (sec)');
-
-pause(1);
-
-% Back Propagation reconstruction
-figure; imagesc(plotdatacube(abs(reobj_raw))); title('BackPropagation'); axis image; drawnow; colormap(hot); colorbar; axis off;
-print('-dpng', [outdir, obj_name, '_', 'BP', '.png']);
-
-% TwIST reconstruction
-figure; imagesc(plotdatacube(abs(reobj_deconv))); title('Reconstruction'); axis image; drawnow; colormap(hot); colorbar; axis off;
-print('-dpng', [outdir, obj_name, '_', deconv_type, '_', num2str(iter_num), '.png']);
-
-% % Show 3D OTF
-% figure; show3d(abs(psf3d), 0.001); title('PSF');
-% print('-dpng', [outdir, obj_name, '_PSF', num2str(deltaZ),'.png']);
-
-% Show 3D volume
-% figure; show3d(abs(reobj_raw), 0.01); title('BackPropagation');
-% print('-dpng', [outdir, obj_name, '_BP_3d.png']);
-
-figure; show3d(abs(reobj_deconv), 0.01); title('Reconstruction');
-print('-dpng', [outdir, obj_name, '_', deconv_type, '_3d_', num2str(iter_num), '.png']);
-% write3d(abs(reobj_deconv), z_scope*1e9, outdir, [obj_name, '_' ,deconv_type]);
+% if issim
+%     figure; semilogy(times, objective, 'LineWidth',2); ylabel('objective distance'); xlabel('CPU time (sec)');
+%     print('-dpng', [out_filename, 'objdis.png']);
+%     figure; plot(times, mses, 'LineWidth',2); ylabel('MSE'); xlabel('CPU time (sec)');
+% end
 
 % Write 2D images of the reconstruction
-if isWrite2DRecon ~= 0
+if isDebug
+    % Back vecProp reconstruction
+    figure; imagesc(plotdatacube(abs(reobj_raw))); title('BackPropagation'); axis image; drawnow; colormap(hot); colorbar; axis off;
+    print('-dpng', [out_filename, 'BP', '.png']);
+    
+    % TwIST reconstruction
+    figure; imagesc(plotdatacube(abs(reobj_deconv))); title('Reconstruction'); axis image; drawnow; colormap(hot); colorbar; axis off;
+    print('-dpng', [out_filename, deconv_type, '_', num2str(iter_num), '.png']);
+    
+    % % Show 3D OTF
+    % figure; show3d(abs(psf3d), 0.001); title('PSF');
+    % print('-dpng', [outdir, obj_name, '_PSF', num2str(deltaZ),'.png']);
+    
+    % Show 3D volume
+    figure; show3d(abs(reobj_raw), 0.01);
+    print('-dpng', [out_filename, 'BP_3d.png']);
+    %     view(0, 0); print('-dpng', [out_filename, 'BP_side.png']);
+    %     view(0, 90); print('-dpng', [out_filename, 'BP_top.png']);
+    
+    figure; show3d(abs(reobj_deconv), 0.01);
+    print('-dpng', [out_filename, deconv_type,  '_', num2str(iter_num), '_3d.png']);
+    %     view(0, 0); print('-dpng', [out_filename, deconv_type,  '_', num2str(iter_num), '_side.png']);
+    %     view(0, 90); print('-dpng', [out_filename, deconv_type, '_', num2str(iter_num), '_top.png']);
+    % write3d(abs(reobj_deconv), z_scope*1e9, outdir, [obj_name, '_' ,deconv_type]);
+    
+else
+    save([outdir, obj_name, '_', deconv_type ,'_result.mat'], 'reobj_raw', 'reobj_deconv', 'iter_num');
+
     % figure; imagesc(abs(holo)); title('Hologram'); axis image; colorbar;
-    write3d(abs(reobj_raw), outdir, [obj_name, '_', deconv_type, '.png']);
-    %     write3d(abs(reobj_deconv), outdir, [obj_name, '_', deconv_type, '.png']);
+    
+    % write3d(abs(reobj_deconv), z_scope*1e9, outdir, obj_name);
+    
+    imwrite(mat2gray(real(holo)), [out_filename, 'holo.png']);
+    
+    % Show 3D volume
+    figure; show3d(abs(reobj_raw), 0.01); axis normal;set(gcf,'Position',[0,0,500,500]);
+    saveas(gca, [out_filename, 'BP_3d.png'], 'png');
+    view(0, 0); colorbar off; axis equal; 
+    saveas(gca, [out_filename, 'BP_side.png'], 'png');   
+    view(0, 90); colorbar off; axis equal; 
+    saveas(gca, [out_filename, 'BP_top.png'], 'png'); 
+
+    figure; show3d(abs(reobj_deconv), 0.01); axis normal; set(gcf,'Position',[0,0,500,500]);
+    saveas(gca, [out_filename, deconv_type, '_3d.png'], 'png');
+    view(0, 0); colorbar off; 
+    saveas(gca, [out_filename, deconv_type, '_side.png'], 'png'); 
+    view(0, 90); colorbar off; 
+    saveas(gca, [out_filename, deconv_type, '_top.png'], 'png');
+    
+    figure; show3d(abs(obj3d), 0.01); axis normal; set(gcf,'Position',[0,0,500,500]);
+    saveas(gca,[outdir, obj_name, '.png'], 'png');
+    view(0, 0); colorbar off; 
+    saveas(gca,[outdir, obj_name, '_side.png'], 'png');
+    view(0, 90); colorbar off;
+    saveas(gca,[outdir, obj_name, '_top.png'], 'png');
+
+%     set(gcf,'paperpositionmode','auto');
+%     print('-depsc', [out_filename, deconv_type, '_3d.eps']);
 end

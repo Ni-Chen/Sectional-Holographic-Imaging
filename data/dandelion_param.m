@@ -7,6 +7,8 @@ z1 = 1.5cm, z2=5.5cm
 
 load('dandelion.mat');
 
+holo_type = 'inline';  
+
 % number of pixels of the detected images
 pixel_num = 1024;
 
@@ -22,6 +24,7 @@ Nz = 12;   % number of axial planes, should cover the depth range
 
 z_scope = offsetZ -((1:Nz)- round(Nz/2))*deltaZ 
 
+sigma = 0.0277;
 %% ==================================================================
 pad_size = 0;   % 100, % number of zeros to pad matrix by in each direction
 

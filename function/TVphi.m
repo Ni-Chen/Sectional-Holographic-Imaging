@@ -13,7 +13,7 @@ function y = TVphi(x, Nvy, Nvx, Nvz)
 end
 
 function [y, dif] = TVnorm(x)
-	TV = gradient3D(x);
+	TV = Grad3D(x);
 	dif = sqrt(sum(TV.^2, 4));
 	y = sum(dif(:));
 end

@@ -24,6 +24,8 @@ scanning holography," Appl. Opt. 48, H113-H119 (2009)
 
 load('beads.mat');
 
+holo_type = 'complex';  
+
 % data size
 [Ny_ori, Nx_ori] = size(holo);
 
@@ -41,6 +43,8 @@ deltaZ = 5e-6;  % distance between each axial plane (um)
 offsetZ = 105e-6;  % distance from detector to center of the object plane (um)
 
 z_scope = offsetZ - ((1:Nz)- round(Nz/2))*deltaZ
+
+tau = 0.04;
 
 %% ========================================== Crop =================================================
 N_crop = 512;

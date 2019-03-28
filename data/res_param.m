@@ -10,12 +10,17 @@
 %}
 
 load('res.mat');
+
+holo_type = 'inline';  
+
 % data size
 [Ny, Nx] = size(holo);
 
 lambda = 632.8e-9;    % wavelength of illumination beam
 pps = 3.45e-6;      % pixel pitch of CCD camera
 offsetZ = 123e-3;        % Distance between object and camera
+
+tau = 0.03;
 
 deltaX = pps;
 deltaY = pps;
