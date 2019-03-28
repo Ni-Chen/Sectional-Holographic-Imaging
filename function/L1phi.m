@@ -1,6 +1,6 @@
 function y = L1phi(x)
 
-    X = V2C(x(:));
-    y = sum(sqrt(real(X).^2 + imag(X).^2));
+    x_complex = V2C(x(:));
+    y = sum(sqrt(real(x_complex).^2 + imag(x_complex).^2));
     
 end

@@ -2,6 +2,7 @@ function [otf3d, psf3d, pupil3d] = OTF3D(Ny, Nx, Nz, lambda, dx, dy, dz, zd, sen
 
     % The object center is located at the origin of the coordinate system, z0 is the detect plane
     z = zd - ((1:Nz)- round(Nz/2)).*dz;  % Sampling of the z space, z = zd + (0:Nz-1).*dz;  
+%     z = zd + (0:Nz-1).*dz;   % inline twin image eliminating
     
     otf3d = zeros(Ny, Nx, Nz);
     pupil3d = zeros(Ny, Nx, Nz);

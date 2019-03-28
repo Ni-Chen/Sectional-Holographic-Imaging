@@ -1,6 +1,6 @@
 %{
 ----------------------------------------------------------------------------------------------------
-Name: Code for sgenerate 3D object.
+Name: Code for generate 3D object.
 
 Author   : Ni Chen (chenni@snu.ac.kr)
 Date     :     
@@ -13,26 +13,24 @@ close all;
 clear;
 clc;
 
-format short;
-
 addpath('./function');
 addpath('./data/');
 
 indir = './data/';
 outdir = './output/';
 
-% random_scatter, geo_overlap, helix_circular, helix_conical, SNUE
-obj_name = 'SNUE'; 
+% random, geo, overlap, cirhelix, conhelix, SNUE
+obj_name = 'random'; 
 run([indir, obj_name, '_param.m']);
 
 %% ====================================== 3D object ================================================
 switch obj_name
      case 'SNUE'
-%         load('D48.mat');load('I48.mat');load('S48.mat');load('P48.mat');
-        S = double(imread('S.tif'));
-        N = double(imread('N.tif'));
-        U = double(imread('U.tif'));
-        E = double(imread('E.tif'));
+        % Transmitance should be 0~1
+        S = mat2gray((imread('S.tif')));   
+        N = mat2gray((imread('N.tif')));
+        U = mat2gray((imread('U.tif')));
+        E = mat2gray((imread('E.tif')));
          
         obj3d = zeros(Nx, Ny, Nz);
         obj3d(:,:,2)=0.6*S;
@@ -46,7 +44,8 @@ switch obj_name
         obj3d(40:60,40:50, 15) = 0.6;
         obj3d(22:42,22:42, 30) = 0.8;
         obj3d(5:25,5:22, 55) = 1;
-    case 'random_scatter'
+        
+    case 'random'
         obj3d = zeros(Nx, Ny, Nz);
         for iz = 1:Nz
             ix = ceil(rand(1)*Nx);
@@ -60,16 +59,16 @@ switch obj_name
             ix_range(ix_range>Nx) = Nx;
             iy_range(iy_range>Ny) = Ny;
             
-            obj3d(iy_range, ix_range, iz) = rand(1);            
+            obj3d(iy_range, ix_range, iz) = 1;     % rand(1)        
         end
         
-    case 'geo_overlap'
+    case 'overlap'
         obj3d = zeros(Nx, Ny, Nz);
-        obj3d(20:50,20:50, 55) = 0.6;
-        obj3d(30:35,10:55, 30) = 0.8;
+        obj3d(20:50,20:50, 55) = 0.8;
+        obj3d(30:35,10:55, 30) = 0.9;
         obj3d(10:45,15:25, 15) = 1.0;
    
-    case 'helix_circular'
+    case 'cirhelix' %  circular helix
         obj3d = zeros(Ny,Nx,Nz);
         a = 1.5;
         c = 0.8;
@@ -87,7 +86,7 @@ switch obj_name
 
         obj3d(xyz) = 1;
         
-    case 'helix_conical'
+    case 'conhelix'  % conical helix 
         a = 0.25;
         c = 1.2;
         t = 0:0.005:12*pi;     
@@ -116,13 +115,5 @@ print('-dpng', [outdir, obj_name, '.png']);
 % print('-dsvg', [outdir, obj_name, '.svg']);
 % fig2svg([outdir, obj_name, '.svg']);
 
-save([indir, obj_name, '.mat'], 'obj3d');
-
-% %% ========================================= Propagation ===========================================
-% % illumination light
-% [otf3d, psf3d, pupil3d] = OTF3D(Nx, Ny, Nz, lambda, deltaX, deltaY, deltaZ, offsetZ, sensor_size);
-% S = Propagation3D(obj3d, otf3d, pupil3d);  % Field at the center plane of the 3D object
-% holo = S;
-% 
-% save([indir, '3dobj_', obj_name, '.mat'], 'obj3d');
+save([indir, obj_name, '_3d.mat'], 'obj3d');
 

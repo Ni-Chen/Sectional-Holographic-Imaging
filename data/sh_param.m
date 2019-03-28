@@ -10,6 +10,10 @@ in HKU, relative k of k001 = 555 = 89.452cm; k002 = 776 = 63.977cm; since rk=pi/
 meet the original z, different deltax may be used in the reconstruction
 %}
 
+load('sh.mat');
+
+holo_type = 'complex';  
+
 % data size
 Nx = 500;
 Ny = 500;
@@ -30,6 +34,7 @@ offsetZ = 77e-2;
 z_scope = offsetZ - ((1:Nz)- round(Nz/2))*deltaZ 
 
 
+tau = 0.02;
 %% Pad
 N = 512;
 pad_size = (N-Nx)/2;
