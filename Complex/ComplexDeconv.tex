@@ -16,14 +16,15 @@
 \title{Volumetric imaging by complex holographic deconvolution}
 
 \author[1]{Ni Chen}
+\author[1]{Jinsoo Jeong}
 \author[2]{Peng Xia}
-\author[3]{Edmund Y. Lam}
+% \author[3]{Edmund Y. Lam}
 \author[1,*]{Byoungho Lee}
 
 \affil[1]{Department of Electrical and Computer Engineering,
 Seoul National University, Seoul 08826, Korea}
 \affil[2]{Research Institute for Measurement and Analytical Instrumentation, National Metrology Institute of Japan, National Institute of Advanced Industrial Science and Technology, Tsukuba, Ibaraki 305-8568, Japan}
-\affil[3]{Department of Electrical and Electronic Engineering, The University of Hong Kong, Pokfulam, Hong Kong}
+% \affil[3]{Department of Electrical and Electronic Engineering, The University of Hong Kong, Pokfulam, Hong Kong}
 
 \affil[*]{Corresponding author: byoungho@snu.ac.kr}
 
@@ -149,7 +150,7 @@ The two-step iterative shrinkage/thresholding~(TwIST) algorithm is used to solve
 %\end{algorithm}
 
 \subsection{Normalization of the complex hologram}
-
+$g(x,y)=A(x,y)\exp(j\phi(x,y))$, $A \in [0 ~ 1]$ and $\phi \in [-\pi ~ \pi]$ 
 %====================================================================
 \section{Results}\label{sec_results}
 
@@ -231,8 +232,8 @@ Figure~\ref{fig_exp} shows the experimental reconstructions from phase-shifting 
 \begin{subfigure}[b]{0.95\columnwidth}
   \centering
   \begin{minipage}[b]{0.15\columnwidth}
-    \includegraphics[width=1\columnwidth]{conhelix_complex_holo}
-    \includegraphics[width=1\columnwidth]{conhelix_complex_holo}
+    \includegraphics[width=1\columnwidth]{conhelix_complex_holo_real}
+    \includegraphics[width=1\columnwidth]{conhelix_complex_holo_img}
     \end{minipage}
     \includegraphics[width=0.33\columnwidth]{conhelix_complex_BP_3d}
     \includegraphics[width=0.33\columnwidth]{conhelix_complex_TwIST_3d}
@@ -243,8 +244,8 @@ Figure~\ref{fig_exp} shows the experimental reconstructions from phase-shifting 
 \begin{subfigure}[b]{0.95\columnwidth}
   \centering
   \begin{minipage}[b]{0.15\columnwidth}
-    \includegraphics[width=1\columnwidth]{conhelix_complex_holo}
-    \includegraphics[width=1\columnwidth]{conhelix_complex_holo}
+    \includegraphics[width=1\columnwidth]{conhelix_complex_holo_real}
+    \includegraphics[width=1\columnwidth]{conhelix_complex_holo_img}
     \end{minipage}
     \includegraphics[width=0.33\columnwidth]{conhelix_complex_BP_3d}
     \includegraphics[width=0.33\columnwidth]{conhelix_complex_TwIST_3d}
@@ -269,7 +270,7 @@ Point scatter  & $L_2(2L_2-1)$ & $\Phi_{i2}$ \\
 \label{tb_expspec}
 \end{table}
 
-\subsection{Auto-focusing property of the proposed method}
+\subsection{Auto-focusing of the proposed method}
 
 \subsection{Analysis}
 
@@ -279,7 +280,7 @@ Point scatter  & $L_2(2L_2-1)$ & $\Phi_{i2}$ \\
 
 In this work, we have presented .......
 
-Interferometric based hologram can be processed to be a complex hologram.
+Interferometric based hologram can be processed to become a complex hologram.
 
 %====================================================================
 
