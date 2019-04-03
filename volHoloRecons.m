@@ -30,10 +30,10 @@ obj_name = 'hair';
 holo_type = 'complex';  % complex; inline; offline;
 
 % Output setting
-isDebug = 1;
+isDebug = 0;
 
 % Deconvolution setting
-iter_num = 100;
+iter_num = 10000;
 regu_type = 'TV';  % 'TV', 'L1'
 deconv_type = 'TwIST';  % 'TwIST','GPSR', TVAL3, SALSA, NESTA, TVPD
 
@@ -117,8 +117,8 @@ holo_vec = C2V(holo(:));
 
 switch deconv_type
     case 'TwIST'  % works for both complex and inline holograms, but very slowly
-        tau = 0.1;   % This effects, need further investigation
-        tau_psi = 0.2;
+%         tau = 0.2;   % This effects, need further investigation
+%         tau_psi = 0.25;
         tolA = 1e-6;
         
         if strcmp(regu_type, 'L1')
@@ -149,7 +149,7 @@ switch deconv_type
         reobj_deconv = reobj_TwIST;
         
     case 'GPSR' % works but not for overlapping
-        tau = 0.2;  % regularization parameter
+        tau = 0.02;  % regularization parameter
         tolA = 1e-6; % stopping threshold
         [reobj_SALSA, reobj_debias, obj_gpsr, times, debias_s, mses] = GPSR_BB(holo_vec, A_fun, tau,...
             'Debias', 1, ...
@@ -338,7 +338,7 @@ if isDebug
 else
     save([outdir, obj_name, '_', deconv_type ,'_result.mat'], 'reobj_raw', 'reobj_deconv', 'iter_num');
 
-    figure; semilogy(mses(20:end), 'LineWidth',2); ylabel('MSE'); xlabel('Iteration');
+    figure; plot(mses(10:end), 'LineWidth',2); ylabel('MSE'); xlabel('Iteration');
       
     % write3d(abs(reobj_deconv), z_scope*1e9, outdir, obj_name);
     
@@ -356,7 +356,7 @@ else
 
 %     temp = (reobj_deconv-min(reobj_deconv(:)))/(max(reobj_deconv(:))-min(reobj_deconv(:)));
     temp = abs(reobj_deconv);
-    temp = (temp-min(temp(:)))/(max(temp(:))-min(temp(:)));
+%     temp = (temp-min(temp(:)))/(max(temp(:))-min(temp(:)));
     figure; show3d(temp, 0.01); axis normal; set(gcf,'Position',[0,0,500,500]);
     caxis([0 1]);
     saveas(gca, [out_filename, deconv_type, '_3d.png'], 'png');
