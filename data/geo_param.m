@@ -18,4 +18,4 @@ deltaY = pps;
 
 % Center of the object is located at the origin of the coordinates, offsetZ is the location of the
 % hologram
-z_scope = offsetZ - ((1:Nz)- round(Nz/2))*deltaZ
+z = offsetZ - ((1:Nz)- round(Nz/2))*deltaZ

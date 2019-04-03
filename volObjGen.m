@@ -20,7 +20,7 @@ indir = './data/';
 outdir = './output/';
 
 % random, geo, overlap, cirhelix, conhelix, SNUE
-obj_name = 'random'; 
+obj_name = 'SNUE'; 
 run([indir, obj_name, '_param.m']);
 
 %% ====================================== 3D object ================================================
@@ -59,7 +59,7 @@ switch obj_name
             ix_range(ix_range>Nx) = Nx;
             iy_range(iy_range>Ny) = Ny;
             
-            obj3d(iy_range, ix_range, iz) = 1;     % rand(1)        
+            obj3d(iy_range, ix_range, iz) = rand(1);     % rand(1)        
         end
         
     case 'overlap'

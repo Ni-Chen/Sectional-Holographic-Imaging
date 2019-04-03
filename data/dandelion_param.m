@@ -22,7 +22,7 @@ offsetZ = 35e-3;  % distance from detector to first reconstructed plane (um)
 
 Nz = 12;   % number of axial planes, should cover the depth range
 
-z_scope = offsetZ -((1:Nz)- round(Nz/2))*deltaZ 
+z = offsetZ -((1:Nz)- round(Nz/2))*deltaZ 
 
 sigma = 0.0277;
 %% ==================================================================

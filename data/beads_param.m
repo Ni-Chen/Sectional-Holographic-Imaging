@@ -27,34 +27,26 @@ load('beads.mat');
 holo_type = 'complex';  
 
 % data size
-[Ny_ori, Nx_ori] = size(holo);
-
-Nz = 14;
+[Ny, Nx] = size(holo);
 
 lambda = 532e-9;  % wavelength (um)
 
 % sensor_size = 140e-6/(20*(1/60));  % size of detector (um)
 sensor_size = 105e-6/(20*(1/60));    % size of detector (um), FOV/M
-pps = sensor_size/Nx_ori
-deltaX = pps;
-deltaY = pps;
+pps = sensor_size/Nx;
 
-deltaZ = 5e-6;  % distance between each axial plane (um)
-offsetZ = 105e-6;  % distance from detector to center of the object plane (um)
+% Nz = 14;
+% deltaZ = 5e-6;  % distance between each axial plane (um)
+% offsetZ = 105e-6;  % distance from detector to center of the object plane (um)
+% z_scope = offsetZ - ((1:Nz)- round(Nz/2))*deltaZ
 
-z_scope = offsetZ - ((1:Nz)- round(Nz/2))*deltaZ
+z = [85 125]*1e-6;
+Nz = length(z);
 
-tau = 0.04;
+tau = 0.1;   % This effects, need further investigation
+tau_psi = 0.2;
 
-%% ========================================== Crop =================================================
-N_crop = 512;
-Nx = N_crop;
-Ny = N_crop;
-
-% size of detector (um)
-sensor_size = Nx*pps;
-
-holo_crop = holo(Ny_ori/2-N_crop/2+1:Ny_ori/2+N_crop/2, Nx_ori/2-N_crop/2+1:Nx_ori/2+N_crop/2);
-clear holo;
-holo = holo_crop;
+%% Resize 
+[holo, pps] = holoResize(holo, pps, 512, 20);
+[Ny, Nx] = size(holo);
 

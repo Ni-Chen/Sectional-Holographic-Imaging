@@ -23,8 +23,4 @@ function field3d = iMatProp3D(field2d, otf3d, pupil3d, holo_type)
 
     field3d = conj(point_field_ft).*conj(volume_field);
     
-%     % Filter
-%     sigma = 1;
-%     gausFilter = fspecial('gaussian', [3,3], sigma);
-%     field3d = imfilter(field3d, gausFilter, 'replicate');
 end

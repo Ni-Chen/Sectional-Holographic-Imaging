@@ -17,6 +17,6 @@ sensor_size = Nx*pps;  % size of detector (um)
 deltaX = pps;
 deltaY = pps;
 
-z_scope = ((1:Nz)- round(Nz/2))*deltaZ + offsetZ
+z = offsetZ - ((1:Nz)- round(Nz/2))*deltaZ;
 
-z_depth = Nz*deltaZ
+% z_depth = Nz*deltaZ
