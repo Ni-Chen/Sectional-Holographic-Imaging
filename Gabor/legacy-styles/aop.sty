@@ -1,0 +1,28 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{legacy-styles/aop}[2018/07/19 v1.2 Advances in Optics and Photonics Journal color scheme]
+
+% Set journal name for header
+\newcommand*{\journalname}{Advances in Optics and Photonics}
+
+% Set journal article types
+\newcommand*{\journalshorttype}{Tutorial}
+\newcommand*{\journallongtype}{Review Article}
+
+% Set color for header, authors, table lines
+% For long articles
+\definecolor{color2}{RGB}{145,0,40} % dark purple for review articles
+% For short articles
+\definecolor{color2b}{RGB}{50,101,49} % green for tutorials
+
+% Set to single column style
+\onecolumn
+\setboolean{singlecolumn}{true} % Set boolean for abstract formatting
+
+% Set bibliography style
+\bibliographystyle{osajnl}
+
+% AOP has a narrower column
+\geometry{left=120pt,right=120pt}
+\fancy@setoffs
+
+\endinput

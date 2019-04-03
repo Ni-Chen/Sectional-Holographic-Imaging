@@ -23,25 +23,31 @@ iFT = @(x) ifftshift(ifft(fftshift(x)));
 addpath(genpath('./function/'));  % Add funtion path with sub-folders
 
 indir = './data/';  % Hologram data
-% outdir = './output/';  % Output files
-outdir = './Gabor/figure/';  % Output files
 
 % Simulations: random, geo, overlap, cirhelix, conhelix, SNUE
-% Experiments: dandelion, sh, beads, res
-obj_name = 'overlap';
-holo_type = 'inline';  % complex; inline; offline;
+% Experiments: dandelion, sh, beads, res, hair
+obj_name = 'hair';
+holo_type = 'complex';  % complex; inline; offline;
+
+% Output setting
+isDebug = 1;
 
 % Deconvolution setting
-iter_num = 1000;
+iter_num = 100;
 regu_type = 'TV';  % 'TV', 'L1'
 deconv_type = 'TwIST';  % 'TwIST','GPSR', TVAL3, SALSA, NESTA, TVPD
 
-% Output setting
-isDebug = 0;
+if(isDebug)
+    outdir = './output/';  % Output files
+else
+%     outdir = './Complex/figure/';  % Output images for paper writing
+    outdir = './Sectional/figure/';  % Output images for paper writing
+end
 
 %% ======================================= Hologram ================================================
 run([indir, obj_name, '_param.m']);  % Parameters of the object and hologram 
-[otf3d, psf3d, pupil3d] = OTF3D(Ny, Nx, Nz, lambda, deltaX, deltaY, deltaZ, offsetZ, sensor_size);
+% [otf3d, psf3d, pupil3d] = OTF3D(Ny, Nx, Nz, lambda, deltaX, deltaY, deltaZ, offsetZ, sensor_size);
+[otf3d, psf3d, pupil3d] = OTF3D_z(Ny, Nx, lambda, pps, z);
 
 if any(strcmp(obj_name, {'geo', 'overlap', 'random', 'conhelix', 'cirhelix', 'SNUE'}))
 % Simulation data
@@ -49,24 +55,30 @@ if any(strcmp(obj_name, {'geo', 'overlap', 'random', 'conhelix', 'cirhelix', 'SN
     load([indir, obj_name, '_3d.mat']);
     vol3d_vec = C2V(obj3d(:));  % For calculating MSE
     
-    prop_field = Propagation3D(obj3d, otf3d, pupil3d);  % Field at the center plane of the 3D object
+    prop_field = MatProp3D(obj3d, otf3d, pupil3d);  % Field at the center plane of the 3D object
     
     switch holo_type
         case 'complex'
             holo = prop_field;
+            tau = 0.1;   % This effects, need further investigation
+            tau_psi = 0.25;
+            
+            holo = holoNorm(holo);
+        
         case 'inline'
             %{
               Inline hologram, I = |R|^2 + OR* + O*R + |O|^2, |R|^2 can be captured directly, 
               OR* + O*R + |O|^2 = iFT(FT(I) - FT(|R|^2 )), suppose |R|=1, real(OR* + O*R)=2real(O)
             %}
             holo = prop_field + conj(prop_field) + sum(obj3d.^2,3)/Nz; 
-%             holo = prop_field + conj(prop_field);  % in weak object case
+
+            holo = holo./max(abs(holo(:)));
+%             holo = abs(holo)./max(abs(holo(:))).*exp(1i*angle(holo));
         case 'offline'
     end
     
     % add noise
-%     holo = imnoise(holo, 'gaussian', 0, 0.001);
-    holo = awgn(holo, 40);
+    holo = awgn(holo, 40);  % holo = imnoise(holo, 'gaussian', 0, 0.001);
     
     out_filename = [outdir, obj_name, '_', holo_type , '_'];
 else
@@ -76,16 +88,20 @@ else
     vol3d_vec = C2V(temp(:));  % Experiments have no reference object, just for coding convenience
    
     out_filename = [outdir, obj_name, '_'];
+    
+    holo = holoNorm(holo);
 end
 
-holo = holo./max(max(abs(holo)));  % Normalization
-
+% [sigma, mu]= noiseAnalysis(holo)
 % holo = holodenoise(holo); % Filter noise    
-% sigma = noiseAnalysis(holo)
 
 %% ========================== Reconstruction with back-propagation =================================
+
 reobj_raw = iMatProp3D(holo, otf3d, pupil3d, holo_type);
-% write3d(abs(reobj_raw), z_scope*1e9, outdir, obj_name);
+temp = reobj_raw;
+write3d(abs(temp), z*1e6, outdir, obj_name);
+% write3d(abs(temp), z_scope*1e6, outdir, obj_name);
+figure; imagesc(plotdatacube(abs(temp))); title('BackPropagation'); axis image; drawnow; colormap(hot); colorbar; axis off;
 
 %% ============= Construct Minimization problem and Reconstruction with deconvolution ==============
 A_fun = @(field3d_vec) VecProp3D(field3d_vec, otf3d, pupil3d, holo_type);
@@ -95,23 +111,14 @@ Nyv = Ny;
 Nxv = Nx*Nz*2;  %!!!!
 Nzv = 1;
 
-% Nyv = 2*Ny;
-% Nxv = Nx;  %!!!!
-% Nzv = Nz;
-
-% Nyv = Ny;
-% Nxv = Nx*2;  %!!!!
-% Nzv = Nz;
-
 % Since the TV-based denoising term is not defined in a complex domain, the real and imaginary parts
 % are independently processed in a vectorized form.
 holo_vec = C2V(holo(:));
 
 switch deconv_type
     case 'TwIST'  % works for both complex and inline holograms, but very slowly
-        tau = 0.01;   % This effects, need further investigation
-%         sigma = evar(holo_vec);  % This effects
-%         tau = sigma
+        tau = 0.1;   % This effects, need further investigation
+        tau_psi = 0.2;
         tolA = 1e-6;
         
         if strcmp(regu_type, 'L1')
@@ -127,7 +134,7 @@ switch deconv_type
         elseif strcmp(regu_type, 'TV')
             Phi_fun = @(vol3d) TVphi(vol3d, Nyv, Nxv, Nzv);
             piter = 5;
-            Psi_fun = @(vol3d, th) TVpsi(vol3d, th, tau, piter, Nyv, Nxv, Nzv);
+            Psi_fun = @(vol3d, th) TVpsi(vol3d, th, tau_psi, piter, Nyv, Nxv, Nzv);
             
             [reobj_TwIST, ~, objective, times, ~, mses]= TwIST(holo_vec, A_fun, tau, ...
                 'AT', AT_fun, ...
@@ -142,12 +149,12 @@ switch deconv_type
         reobj_deconv = reobj_TwIST;
         
     case 'GPSR' % works but not for overlapping
-        tau = 0.05;  % regularization parameter
+        tau = 0.2;  % regularization parameter
         tolA = 1e-6; % stopping threshold
         [reobj_SALSA, reobj_debias, obj_gpsr, times, debias_s, mses] = GPSR_BB(holo_vec, A_fun, tau,...
             'Debias', 1, ...
             'AT', AT_fun,...
-            'Continuation', 1, ...
+            'Continuation', 0, ...
             'ToleranceA', tolA, ...
             'MaxIterA', iter_num, ...
             'TRUE_X', vol3d_vec);
@@ -295,79 +302,77 @@ switch deconv_type
         reobj_csalsa = reshape(V2C(reobj_csalsa), Ny, Nx, Nz);
         reobj_deconv = reobj_csalsa;
         
-    otherwise
-        
+    otherwise        
 end
 
-
 %% ======================================= Show the images =========================================
-% figure; imagesc(plotdatacube(real(otf3d)));title('OTF');axis image;drawnow;colorbar;
-% print('-dpng', [outdir, obj_name, '_', 'otf', num2str(deltaZ), '.png']);
-% figure; imagesc(plotdatacube(abs(psf3d)));title('PSF');axis image;drawnow;colorbar;
-% figure; imagesc(plotdatacube(real(E)));title('E');axis image;drawnow;colorbar;
-% if issim
-%     figure; semilogy(times, objective, 'LineWidth',2); ylabel('objective distance'); xlabel('CPU time (sec)');
-%     print('-dpng', [out_filename, 'objdis.png']);
-%     figure; plot(times, mses, 'LineWidth',2); ylabel('MSE'); xlabel('CPU time (sec)');
-% end
-
-% Write 2D images of the reconstruction
 if isDebug
+%     figure; semilogy(objective, 'LineWidth',2); ylabel('objective distance'); xlabel('Iteration');
+%     print('-dpng', [out_filename, 'objdis.png']);
+    
+    figure; plot(mses, 'LineWidth',2); ylabel('MSE'); 
+        
     % Back vecProp reconstruction
     figure; imagesc(plotdatacube(abs(reobj_raw))); title('BackPropagation'); axis image; drawnow; colormap(hot); colorbar; axis off;
     print('-dpng', [out_filename, 'BP', '.png']);
     
     % TwIST reconstruction
     figure; imagesc(plotdatacube(abs(reobj_deconv))); title('Reconstruction'); axis image; drawnow; colormap(hot); colorbar; axis off;
-    print('-dpng', [out_filename, deconv_type, '_', num2str(iter_num), '.png']);
+    print('-dpng', [out_filename, deconv_type, '_tau', num2str(tau), '_psi' , num2str(tau_psi), '_', num2str(iter_num), '.png']);
+
+%     figure; show3d(abs(reobj_deconv), 0.01); axis normal; set(gcf,'Position',[0,0,500,500]);
+%     print('-dpng', [out_filename, deconv_type,  '_', num2str(iter_num), '_3d.png']);
+%     view(0, 0); colorbar off; print('-dpng', [out_filename, deconv_type,  '_', num2str(iter_num), '_side.png']);
+%     view(0, 90); colorbar off; print('-dpng', [out_filename, deconv_type, '_', num2str(iter_num), '_top.png']);
     
-    % % Show 3D OTF
-    % figure; show3d(abs(psf3d), 0.001); title('PSF');
-    % print('-dpng', [outdir, obj_name, '_PSF', num2str(deltaZ),'.png']);
-    
-    % Show 3D volume
-    figure; show3d(abs(reobj_raw), 0.01);
-    print('-dpng', [out_filename, 'BP_3d.png']);
-    %     view(0, 0); print('-dpng', [out_filename, 'BP_side.png']);
-    %     view(0, 90); print('-dpng', [out_filename, 'BP_top.png']);
-    
-    figure; show3d(abs(reobj_deconv), 0.01);
-    print('-dpng', [out_filename, deconv_type,  '_', num2str(iter_num), '_3d.png']);
-    %     view(0, 0); print('-dpng', [out_filename, deconv_type,  '_', num2str(iter_num), '_side.png']);
-    %     view(0, 90); print('-dpng', [out_filename, deconv_type, '_', num2str(iter_num), '_top.png']);
-    % write3d(abs(reobj_deconv), z_scope*1e9, outdir, [obj_name, '_' ,deconv_type]);
+%     write3d(abs(reobj_deconv), z_scope*1e6, outdir, [obj_name, '_' ,deconv_type]);
+   
+    % For turnning tau
+%     figure; show3d(abs(reobj_deconv), 0.01); axis normal; set(gcf,'Position',[0,0,500,500]);
+%     saveas(gca, [outdir, obj_name, '_', num2str(tau), '_' , num2str(tau_psi), '_3d.png'], 'png');
+%     view(0, 0); colorbar off; 
+%     saveas(gca, [outdir, obj_name, '_', num2str(tau), '_' , num2str(tau_psi),'_side.png'], 'png'); 
+%     view(0, 90); colorbar off; 
+%     saveas(gca, [outdir, obj_name, '_', num2str(tau), '_' , num2str(tau_psi),'_top.png'], 'png');
     
 else
     save([outdir, obj_name, '_', deconv_type ,'_result.mat'], 'reobj_raw', 'reobj_deconv', 'iter_num');
 
-    % figure; imagesc(abs(holo)); title('Hologram'); axis image; colorbar;
-    
+    figure; semilogy(mses(20:end), 'LineWidth',2); ylabel('MSE'); xlabel('Iteration');
+      
     % write3d(abs(reobj_deconv), z_scope*1e9, outdir, obj_name);
     
-    imwrite(mat2gray(real(holo)), [out_filename, 'holo.png']);
+    imwrite(mat2gray(real(holo)), [out_filename, 'holo_real.png']);
+    imwrite(mat2gray(imag(holo)), [out_filename, 'holo_img.png']);
     
     % Show 3D volume
-    figure; show3d(abs(reobj_raw), 0.01); axis normal;set(gcf,'Position',[0,0,500,500]);
-    saveas(gca, [out_filename, 'BP_3d.png'], 'png');
-    view(0, 0); colorbar off; axis equal; 
-    saveas(gca, [out_filename, 'BP_side.png'], 'png');   
-    view(0, 90); colorbar off; axis equal; 
-    saveas(gca, [out_filename, 'BP_top.png'], 'png'); 
+%     figure; show3d(abs(reobj_raw), 0.01); axis normal;set(gcf,'Position',[0,0,500,500]);
+% %     caxis([0 1]);
+%     saveas(gca, [out_filename, 'BP_3d.png'], 'png');
+%     view(0, 0); colorbar off; axis equal; 
+%     saveas(gca, [out_filename, 'BP_side.png'], 'png');   
+%     view(0, 90); colorbar off; axis equal; 
+%     saveas(gca, [out_filename, 'BP_top.png'], 'png'); 
 
-    figure; show3d(abs(reobj_deconv), 0.01); axis normal; set(gcf,'Position',[0,0,500,500]);
+%     temp = (reobj_deconv-min(reobj_deconv(:)))/(max(reobj_deconv(:))-min(reobj_deconv(:)));
+    temp = abs(reobj_deconv);
+    temp = (temp-min(temp(:)))/(max(temp(:))-min(temp(:)));
+    figure; show3d(temp, 0.01); axis normal; set(gcf,'Position',[0,0,500,500]);
+    caxis([0 1]);
     saveas(gca, [out_filename, deconv_type, '_3d.png'], 'png');
     view(0, 0); colorbar off; 
     saveas(gca, [out_filename, deconv_type, '_side.png'], 'png'); 
     view(0, 90); colorbar off; 
     saveas(gca, [out_filename, deconv_type, '_top.png'], 'png');
     
-    figure; show3d(abs(obj3d), 0.01); axis normal; set(gcf,'Position',[0,0,500,500]);
-    saveas(gca,[outdir, obj_name, '.png'], 'png');
-    view(0, 0); colorbar off; 
-    saveas(gca,[outdir, obj_name, '_side.png'], 'png');
-    view(0, 90); colorbar off;
-    saveas(gca,[outdir, obj_name, '_top.png'], 'png');
-
+%     figure; show3d(abs(obj3d), 0.01); axis normal; set(gcf,'Position',[0,0,500,500]);
+%     caxis([0 1]);
+%     saveas(gca,[outdir, obj_name, '.png'], 'png');
+%     view(0, 0); colorbar off; 
+%     saveas(gca,[outdir, obj_name, '_side.png'], 'png');
+%     view(0, 90); colorbar off;
+%     saveas(gca,[outdir, obj_name, '_top.png'], 'png');
+    mses(end)
 %     set(gcf,'paperpositionmode','auto');
 %     print('-depsc', [out_filename, deconv_type, '_3d.eps']);
 end

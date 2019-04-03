@@ -22,9 +22,4 @@ function field2d = MatProp3D(field3d, otf3d, pupil3d, holo_type)
         %}
         field2d = 2*real(field2d);
     end
-
-%     % Filter
-%     sigma = 1;
-%     gausFilter = fspecial('gaussian', [3,3], sigma);
-%     field2d = imfilter(field2d, gausFilter, 'replicate');
 end
