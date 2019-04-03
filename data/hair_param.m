@@ -22,7 +22,7 @@ Nz = length(z);
 % Nz = 10;
 % z = zd - ((1:Nz)- round(Nz/2)).*dz; 
 
-tau = 0.1;   % This effects, need further investigation
+tau = 0.2;   % This effects, need further investigation
 tau_psi = 0.2;
 %% ========================================== Resize =================================================
 load('hair.mat');

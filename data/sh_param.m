@@ -25,8 +25,8 @@ pps = sensor_size/Nx;
 % offsetZ = 77e-2;
 % z = offsetZ - ((1:Nz)- round(Nz/2))*deltaZ 
 
-% z = [65 89]*1e-2;
-z = [61 65 69 73 77 81 85 89 93 97]*1e-2;  % Even number
+z = [65 89]*1e-2;
+% z = [61 65 69 73 77 81 85 89 93 97]*1e-2;  % Even number
 Nz = length(z);
 
 tau = 0.01;   % This effects, need further investigation
