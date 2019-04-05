@@ -41,12 +41,13 @@ pps = sensor_size/Nx;
 % z_scope = offsetZ - ((1:Nz)- round(Nz/2))*deltaZ
 
 z = [85 125]*1e-6;
+% z = [84 85 86 124 125 126 127 128]*1e-6;
 Nz = length(z);
 
 tau = 0.1;   % This effects, need further investigation
 tau_psi = 0.2;
 
 %% Resize 
-[holo, pps] = holoResize(holo, pps, 512, 20);
+[holo, pps] = holoResize(holo, pps, 512, 0);
 [Ny, Nx] = size(holo);
 

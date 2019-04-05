@@ -34,5 +34,5 @@ tau_psi = 0.15;
 
 %% Resize 
 load('sh.mat');
-[holo, pps] = holoResize(holo, pps, 256, 10);
+[holo, pps] = holoResize(holo, pps, 256, 0);
 [Ny, Nx] = size(holo);
