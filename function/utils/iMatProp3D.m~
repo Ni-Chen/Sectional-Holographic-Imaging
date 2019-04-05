@@ -13,18 +13,17 @@ function field3d = iMatProp3D(field2d, otf3d, pupil3d, holo_type)
     end
 
     plane_field_ft = conj(ifftshift(ifft2(fftshift(conj(field2d)))));  
+%     plane_field_ft = conj((ifft2(fftshift(conj(field2d)))));  
     vol_field_ft = conj(otf3d).*conj(pupil3d).*plane_field_ft;  % Illuminate with plane wave, and back propagation
 
-    pinhole = ifftshift(fft2(fftshift(ones(Ny, Nx))));  % delta = FT(1)    
+    pinhole = ifftshift(fft2(fftshift(ones(Ny, Nx))));  % delta = FT(1)   
+%     pinhole = fft2(ones(Ny, Nx));  % delta = FT(1)
     point_field = pupil3d.*conj(otf3d).*pinhole;
-    point_field_ft = ifftshift(ifft2(fftshift(point_field)));
+    point_field_ft = ifft2(fftshift(point_field));
     
-    volume_field = ifftshift(fft2(ifftshift(conj(vol_field_ft))));
+%     volume_field = fft2(ifftshift(conj(vol_field_ft)));
+    volume_field = ifftshift(fft2(fftshift(conj(vol_field_ft))));
 
     field3d = conj(point_field_ft).*conj(volume_field);
     
-%     % Filter
-%     sigma = 1;
-%     gausFilter = fspecial('gaussian', [3,3], sigma);
-%     field3d = imfilter(field3d, gausFilter, 'replicate');
 end

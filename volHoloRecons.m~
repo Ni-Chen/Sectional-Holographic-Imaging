@@ -26,7 +26,7 @@ indir = './data/';  % Hologram data
 
 % Simulations: random, geo, overlap, cirhelix, conhelix, SNUE
 % Experiments: dandelion, sh, beads, res, hair
-obj_name = 'hair';
+obj_name = 'sh';
 holo_type = 'complex';  % complex; inline; offline;
 
 % Output setting
@@ -35,12 +35,13 @@ isDebug = 1;
 % Deconvolution setting
 iter_num = 100;
 regu_type = 'TV';  % 'TV', 'L1'
-deconv_type = 'GPSR';  % 'TwIST','GPSR', TVAL3, SALSA, NESTA, TVPD
+deconv_type = 'TwIST';  % 'TwIST','GPSR', TVAL3, SALSA, NESTA, TVPD
 
 if(isDebug)
     outdir = './output/';  % Output files
 else
-    outdir = './Complex/figure/';  % Output images for paper writing
+%     outdir = './Complex/figure/';  % Output images for paper writing
+    outdir = './Sectional/figure/';  % Output images for paper writing
 end
 
 %% ======================================= Hologram ================================================
@@ -54,13 +55,13 @@ if any(strcmp(obj_name, {'geo', 'overlap', 'random', 'conhelix', 'cirhelix', 'SN
     load([indir, obj_name, '_3d.mat']);
     vol3d_vec = C2V(obj3d(:));  % For calculating MSE
     
-    prop_field = Propagation3D(obj3d, otf3d, pupil3d);  % Field at the center plane of the 3D object
+    prop_field = MatProp3D(obj3d, otf3d, pupil3d);  % Field at the center plane of the 3D object
     
     switch holo_type
         case 'complex'
             holo = prop_field;
-            tau = 0.02;   % This effects, need further investigation
-            tau_psi = 0.05;
+            tau = 0.1;   % This effects, need further investigation
+            tau_psi = 0.25;
             
             holo = holoNorm(holo);
         
@@ -88,7 +89,7 @@ else
    
     out_filename = [outdir, obj_name, '_'];
     
-%     holo = holoNorm(holo);
+    holo = holoNorm(holo);
 end
 
 % [sigma, mu]= noiseAnalysis(holo)
@@ -98,8 +99,6 @@ end
 
 reobj_raw = iMatProp3D(holo, otf3d, pupil3d, holo_type);
 temp = reobj_raw;
-% temp = (temp-min(temp(:)))/(max(temp(:))-min(temp(:)));
-% temp = -temp;
 write3d(abs(temp), z*1e6, outdir, obj_name);
 % write3d(abs(temp), z_scope*1e6, outdir, obj_name);
 figure; imagesc(plotdatacube(abs(temp))); title('BackPropagation'); axis image; drawnow; colormap(hot); colorbar; axis off;
@@ -118,8 +117,8 @@ holo_vec = C2V(holo(:));
 
 switch deconv_type
     case 'TwIST'  % works for both complex and inline holograms, but very slowly
-        tau = 0.01;   % This effects, need further investigation
-        tau_psi = 0.15;
+        tau = 0.005;   % This effects, need further investigation
+        tau_psi = 0.1;
         tolA = 1e-6;
         
         if strcmp(regu_type, 'L1')
@@ -150,7 +149,7 @@ switch deconv_type
         reobj_deconv = reobj_TwIST;
         
     case 'GPSR' % works but not for overlapping
-        tau = 0.03;  % regularization parameter
+        tau = 0.02;  % regularization parameter
         tolA = 1e-6; % stopping threshold
         [reobj_SALSA, reobj_debias, obj_gpsr, times, debias_s, mses] = GPSR_BB(holo_vec, A_fun, tau,...
             'Debias', 1, ...
@@ -319,10 +318,10 @@ if isDebug
     
     % TwIST reconstruction
     figure; imagesc(plotdatacube(abs(reobj_deconv))); title('Reconstruction'); axis image; drawnow; colormap(hot); colorbar; axis off;
-    print('-dpng', [out_filename, deconv_type, '_', num2str(iter_num), '.png']);
+    print('-dpng', [out_filename, deconv_type, '_tau', num2str(tau), '_psi' , num2str(tau_psi), '_', num2str(iter_num), '.png']);
 
-    figure; show3d(abs(reobj_deconv), 0.01); axis normal; set(gcf,'Position',[0,0,500,500]);
-    print('-dpng', [out_filename, deconv_type,  '_', num2str(iter_num), '_3d.png']);
+%     figure; show3d(abs(reobj_deconv), 0.01); axis normal; set(gcf,'Position',[0,0,500,500]);
+%     print('-dpng', [out_filename, deconv_type,  '_', num2str(iter_num), '_3d.png']);
 %     view(0, 0); colorbar off; print('-dpng', [out_filename, deconv_type,  '_', num2str(iter_num), '_side.png']);
 %     view(0, 90); colorbar off; print('-dpng', [out_filename, deconv_type, '_', num2str(iter_num), '_top.png']);
     
@@ -357,7 +356,7 @@ else
 
 %     temp = (reobj_deconv-min(reobj_deconv(:)))/(max(reobj_deconv(:))-min(reobj_deconv(:)));
     temp = abs(reobj_deconv);
-    temp = (temp-min(temp(:)))/(max(temp(:))-min(temp(:)));
+%     temp = (temp-min(temp(:)))/(max(temp(:))-min(temp(:)));
     figure; show3d(temp, 0.01); axis normal; set(gcf,'Position',[0,0,500,500]);
     caxis([0 1]);
     saveas(gca, [out_filename, deconv_type, '_3d.png'], 'png');

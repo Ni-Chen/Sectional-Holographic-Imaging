@@ -2,6 +2,9 @@
     Propagate a single complex field to the 3D object space
 %}
 function field3d = iMatProp3D(field2d, otf3d, pupil3d, holo_type)
+    FT2 = @(x) ifftshift(fft2(fftshift(x)));
+    iFT2 = @(x) ifftshift(ifft2(fftshift(x)));
+    
     [Ny, Nx, ~] = size(otf3d);
 
     if  nargin>3 && strcmp(holo_type, 'inline')
@@ -12,15 +15,14 @@ function field3d = iMatProp3D(field2d, otf3d, pupil3d, holo_type)
         field2d = 2*real(field2d);
     end
 
-    plane_field_ft = conj(ifftshift(ifft2(fftshift(conj(field2d)))));  
+    plane_field_ft = conj(iFT2(conj(field2d)));
     vol_field_ft = conj(otf3d).*conj(pupil3d).*plane_field_ft;  % Illuminate with plane wave, and back propagation
 
-    pinhole = ifftshift(fft2(fftshift(ones(Ny, Nx))));  % delta = FT(1)    
+    pinhole = FT2(ones(Ny, Nx));  % delta = FT(1)   
     point_field = pupil3d.*conj(otf3d).*pinhole;
-    point_field_ft = ifftshift(ifft2(fftshift(point_field)));
+    point_field_ft = iFT2(point_field);
     
-    volume_field = ifftshift(fft2(ifftshift(conj(vol_field_ft))));
+    volume_field = FT2(conj(vol_field_ft));
 
     field3d = conj(point_field_ft).*conj(volume_field);
-    
 end

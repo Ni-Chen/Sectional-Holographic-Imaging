@@ -15,7 +15,7 @@ lambda = 532e-9;    % wavelength of illumination beam
 pps = 3.45e-6;      % pixel pitch of CCD camera
 
 % z = [132 -4 3]*1e-3;
-z = [132 -4 3 8]*1e-3;
+z = [132 3 11]*1e-3;
 Nz = length(z);
 
 % offsetZ = 68e-3;        % Distance between object and camera
