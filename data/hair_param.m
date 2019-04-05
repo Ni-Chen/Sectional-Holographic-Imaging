@@ -27,7 +27,7 @@ tau_psi = 0.2;
 %% ========================================== Resize =================================================
 load('hair.mat');
 
-[holo, pps] = holoResize(holo, pps, 512, 20);
+[holo, pps] = holoResize(holo, pps, 1024, 0);
 [Ny, Nx] = size(holo);
 
 

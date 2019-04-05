@@ -26,14 +26,14 @@ indir = './data/';  % Hologram data
 
 % Simulations: random, geo, overlap, cirhelix, conhelix, SNUE
 % Experiments: dandelion, sh, beads, res, hair
-obj_name = 'hair';
+obj_name = 'beads';
 holo_type = 'complex';  % complex; inline; offline;
 
 % Output setting
 isDebug = 1;
 
 % Deconvolution setting
-iter_num = 5000;
+iter_num = 1000;
 regu_type = 'TV';  % 'TV', 'L1'
 deconv_type = 'TwIST';  % 'TwIST','GPSR', TVAL3, SALSA, NESTA, TVPD
 
