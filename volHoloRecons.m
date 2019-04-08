@@ -1,11 +1,9 @@
 %{
 ----------------------------------------------------------------------------------------------------
 Name: Volume hologram reconstruction with deconvolution
-
 Author:   Ni Chen (chenni@snu.ac.kr)
 Date:
 Modified:
-
 Reference:
 -
 ----------------------------------------------------------------------------------------------------
@@ -26,14 +24,14 @@ indir = './data/';  % Hologram data
 
 % Simulations: random, geo, overlap, cirhelix, conhelix, SNUE
 % Experiments: dandelion, sh, beads, res, hair
-obj_name = 'beads';
+obj_name = 'hair';
 holo_type = 'complex';  % complex; inline; offline;
 
 % Output setting
 isDebug = 1;
 
 % Deconvolution setting
-iter_num = 1000;
+iter_num = 200;
 regu_type = 'TV';  % 'TV', 'L1'
 deconv_type = 'TwIST';  % 'TwIST','GPSR', TVAL3, SALSA, NESTA, TVPD
 
@@ -105,6 +103,7 @@ temp = reobj_raw;
 write3d(abs(temp), z*1e6, outdir, obj_name);
 % write3d(abs(temp), z_scope*1e6, outdir, obj_name);
 figure; imagesc(plotdatacube(abs(temp))); title('BackPropagation'); axis image; drawnow; colormap(hot); colorbar; axis off;
+figure; imagesc(plotdatacube(angle(pupil3d))); title('BackPropagation'); axis image; drawnow; colormap(hot); colorbar; axis off;
 
 %% ============= Construct Minimization problem and Reconstruction with deconvolution ==============
 A_fun = @(field3d_vec) VecProp3D(field3d_vec, otf3d, pupil3d, holo_type);
