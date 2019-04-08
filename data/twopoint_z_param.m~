@@ -1,0 +1,40 @@
+% data size
+Nx = 256;
+Ny = 1;
+Nz = 51;
+
+% Shift 
+z_shift = 1;
+x_shift = 0;
+
+%% System specification
+lambda  = 532e-9;  % wavelength 
+pps     = 8e-6;   % pixel pitch of the hologram 
+z0      = 30e-3;   % distance from detector to center of the object 
+
+Lx = Nx*pps;  % size of detector (um)
+% NA = Lx/2/sqrt(z0^2+(Lx/2)^2)
+NA = Lx/2/sqrt(z0^2)
+
+% Abbe’s diffraction formula for axial resolution
+res_z = 2*lambda/(NA^2)  
+% res_x = lambda/2/NA
+
+% Tatiana Latychevskaia
+res_x = z0*lambda/Lx
+res_z = 8*lambda*z0^2/Lx
+
+
+dz = 10*res_z/(z_shift*2);
+
+% dz = 0.2*dz
+
+%% Indirect parameters
+% Center of the object is located at the origin of the coordinates, z0 is the location of the
+% hologram
+z = z0 - ((1:Nz)- round(Nz/2))*dz;
+z_axis = (z - z0)*1e3;
+
+
+
+
