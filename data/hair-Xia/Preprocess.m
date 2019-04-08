@@ -5,7 +5,7 @@ addpath(genpath('.../function/'));  % Add funtion path with sub-folders
 lambda = 532e-9;    % wavelength of illumination beam
 pps = 3.45e-6;      % pixel pitch of CCD camera
 
-load('background');
+load('Amp_0.003m_dz.mat');
 holo_3_amp = double(Amp);
 holo_3_phase = importdata('Phase_0.003m.txt');
 
@@ -28,7 +28,7 @@ holo = holoNorm(holo);
 
 save(['../hair.mat'], 'holo');
  
-[otf3d, psf3d, pupil3d] = OTF3D_z(Ny, Nx, lambda, pps, [132e-3 -4e-3 3e-3]);
+[otf3d, psf3d, pupil3d] = OTF3D_z(Ny, Nx, lambda, pps, [132e-3 3e-3 10e-3]);
 holo_reobj = iMatProp3D(holo, otf3d, pupil3d, 'complex');
 
 % Back vecProp reconstruction
