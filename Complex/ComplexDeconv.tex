@@ -1,7 +1,7 @@
 \documentclass[9pt,twocolumn,twoside]{osajnl}
 \journal{ol} % Choose journal (ao, aop, josaa, josab, ol, pr)
 % See template introduction for guidance on setting shortarticle option
-\setboolean{shortarticle}{true}
+\setboolean{shortarticle}{false}
 % \documentclass[11pt,twocolumn,twoside]{osajnl}
 \usepackage{caption,subcaption,graphicx,overpic,tikz,tkz-tab,verbatim,multirow,booktabs,siunitx,amsmath,amssymb,bm,mathtools,threeparttable,color,enumitem,listingsutf8,url,xcolor,etaremune,bibentry,textcomp,mathpazo,geometry,lastpage,fancyhdr,float,epstopdf,bm,upgreek,lineno,siunitx}
 \linenumbers
@@ -15,8 +15,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \title{Volumetric imaging by complex holographic deconvolution}
 
-\author[1]{Ni Chen}
-\author[1]{Jinsoo Jeong}
+\author[1,$\sharp$]{Ni Chen}
+\author[1,$\sharp$]{Jinsoo Jeong}
 \author[2]{Peng Xia}
 % \author[3]{Edmund Y. Lam}
 \author[1,*]{Byoungho Lee}
@@ -63,6 +63,14 @@ To our best acknowledge, this is the first that can reconstruct a totally overla
 
 %====================================================================
 \section{Method}\label{sec_method}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\columnwidth]{diffraction}
+\caption{Diffraction}
+\label{fig_diffraction}
+\end{figure}
+
 Suppose $r=(x,y)$ is the lateral coordinates. When a 3D object $o(r,z)$ is illuminated by a plane wave along the optical axis, the result object wavefront at a point of $(r_h, z_h)$ can be represented as a convolution of the object transmittance function with the impulse response of free-space propagation~\cite{Goodman2005}
 \begin{equation}
 \begin{aligned}
