@@ -26,4 +26,4 @@ dz = res_z;
 z = z0 - ((1:Nz)- round(Nz/2))*dz;
 % z_axis = (z - z0)*1e3;
 
-x_axis = ((1:Nx)- round(Nx/2))*pps;
+x_axis = ((1:Nx)- round(Nx/2))*pps*1e3;
