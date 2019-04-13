@@ -20,16 +20,16 @@ indir = './data/';  % Hologram data
 
 % Simulations: random, geo, overlap, cirhelix, conhelix, SNUE
 % Experiments: dandelion, sh, beads, res, hair
-obj_name = 'random';
+obj_name = 'finger';
 holo_type = 'complex';  % complex; inline; offline;
 
 % Output setting
 isDebug = 1;
 
 % Deconvolution setting
-iter_num = 200;
+iter_num = 500;
 regu_type = 'TV';  % 'TV', 'L1'
-deconv_type = 'TwIST';  % 'TwIST','GPSR', TVAL3, SALSA, NESTA, TVPD
+deconv_type = 'GPSR';  % 'TwIST','GPSR', TVAL3, SALSA, NESTA, TVPD
 
 if(isDebug)
     outdir = './output/';  % Output files
@@ -45,7 +45,7 @@ run([indir, obj_name, '_param.m']);  % Parameters of the object and hologram
 [otf3d, psf3d, pupil3d] = OTF3D(Ny, Nx, lambda, pps, z);
 
 
-if any(strcmp(obj_name, {'geo', 'overlap', 'random', 'conhelix', 'cirhelix', 'SNUE'}))
+if any(strcmp(obj_name, {'geo', 'overlap', 'random', 'conhelix', 'cirhelix', 'SNUE', 'finger'}))
 % Simulation data
     issim = 1;    
     load([indir, obj_name, '_3d.mat']);
@@ -58,8 +58,11 @@ if any(strcmp(obj_name, {'geo', 'overlap', 'random', 'conhelix', 'cirhelix', 'SN
     switch holo_type
         case 'complex'
             holo = prop_field;
-            tau = 0.1;   % This effects, need further investigation
-            tau_psi = 0.25;
+%             tau = 0.1;   % This effects, need further investigation
+%             tau_psi = 0.25;
+            
+            tau = 0.005;   % This effects, need further investigation
+            tau_psi = 0.2;
             
             holo = holoNorm(holo);
         

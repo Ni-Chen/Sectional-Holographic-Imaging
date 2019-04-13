@@ -19,8 +19,8 @@ addpath('./data/');
 indir = './data/';
 outdir = './output/';
 
-% random, geo, overlap, cirhelix, conhelix, SNUE, twopoint
-obj_name = 'twopoint_x'; 
+% random, geo, overlap, cirhelix, conhelix, SNUE, twopoint, finger
+obj_name = 'finger'; 
 run([indir, obj_name, '_param.m']);
 
 %% ====================================== 3D object ================================================
@@ -62,6 +62,17 @@ switch obj_name
         obj3d(:,:,2)=0.8*N;
         obj3d(:,:,3)=0.9*U;
         obj3d(:,:,4)=1*E;
+        
+    case 'finger'
+        % Transmitance should be 0~1
+        finger1 = mat2gray((imread('fingerprint1.tif')));   
+        finger2 = mat2gray((imread('fingerprint2.tif')));
+        finger3 = mat2gray((imread('fingerprint3.tif')));
+          
+        obj3d = zeros(Nx, Ny, Nz);
+        obj3d(:,:,1)=0.9*finger1;
+        obj3d(:,:,2)=0.8*finger2;
+%         obj3d(:,:,3)=0.9*finger3;
         
      case 'geo'
         obj3d = zeros(Nx, Ny, Nz);
@@ -133,10 +144,10 @@ switch obj_name
 end
 
 %% =================================================================================================
-% figure;
-% show3d(obj3d, 0.01);
-% title('Object');
-% print('-dpng', [outdir, obj_name, '.png']);
+figure;
+show3d(obj3d, 0.01);
+title('Object');
+print('-dpng', [outdir, obj_name, '.png']);
 
 
 % figure; imagesc(obj3d);axis image; drawnow; colormap(hot); colorbar; axis off;
