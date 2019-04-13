@@ -18,7 +18,7 @@ D = 1*Lx/2;
 NA = Lx/2/sqrt(z0^2 + D^2)
 % NA = Lx/2/sqrt(z0^2)
 
-%% Rayleigh’s diffraction resolution
+%% Rayleighï¿½s diffraction resolution
 % <https://micro.magnet.fsu.edu/primer/digitalimaging/deconvolution/deconresolution.html>
 %
 % <https://www.microscopyu.com/techniques/super-resolution/the-diffraction-barrier-in-optical-microscopy>
