@@ -20,16 +20,16 @@ indir = './data/';  % Hologram data
 
 % Simulations: random, geo, overlap, cirhelix, conhelix, SNUE
 % Experiments: dandelion, sh, beads, res, hair
-obj_name = 'finger';
-holo_type = 'complex';  % complex; inline; offline;
+obj_name = 'cirhelix';
+holo_type = 'inline';  % complex; inline; offline;
 
 % Output setting
 isDebug = 1;
 
 % Deconvolution setting
-iter_num = 500;
+iter_num = 100;
 regu_type = 'TV';  % 'TV', 'L1'
-deconv_type = 'GPSR';  % 'TwIST','GPSR', TVAL3, SALSA, NESTA, TVPD
+deconv_type = 'TwIST';  % 'TwIST','GPSR', TVAL3, SALSA, NESTA, TVPD
 
 if(isDebug)
     outdir = './output/';  % Output files
@@ -58,8 +58,8 @@ if any(strcmp(obj_name, {'geo', 'overlap', 'random', 'conhelix', 'cirhelix', 'SN
     switch holo_type
         case 'complex'
             holo = prop_field;
-%             tau = 0.1;   % This effects, need further investigation
-%             tau_psi = 0.25;
+            tau = 0.1;   % This effects, need further investigation
+            tau_psi = 0.25;
             
             tau = 0.005;   % This effects, need further investigation
             tau_psi = 0.2;
@@ -123,8 +123,8 @@ holo_vec = C2V(holo(:));
 
 switch deconv_type
     case 'TwIST'  % works for both complex and inline holograms, but very slowly
-%         tau = 0.01;   % This effects, need further investigation
-%         tau_psi = 0.15;
+        tau = 0.1;   % This effects, need further investigation
+        tau_psi = 0.25;
         tolA = 1e-6;
         
         if strcmp(regu_type, 'L1')
