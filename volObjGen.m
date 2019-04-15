@@ -19,12 +19,37 @@ addpath('./data/');
 indir = './data/';
 outdir = './output/';
 
-% random, geo, overlap, cirhelix, conhelix, SNUE
+% random, geo, overlap, cirhelix, conhelix, SNUE, twopoint, finger
 obj_name = 'SNUE'; 
 run([indir, obj_name, '_param.m']);
 
 %% ====================================== 3D object ================================================
 switch obj_name
+    case 'twopoint_z'
+        obj3d = zeros(Ny, Nx, Nz);
+        
+        obj3d(Ny, Nx/2 - x_shift, round(Nz/2)-z_shift) = 1;
+        obj3d(Ny, Nx/2 + x_shift, round(Nz/2)+z_shift) = 1;
+        
+        obj_xz = squeeze(obj3d(Ny, :, :));
+
+        figure;
+        imshow(obj_xz,[]);axis image; colormap(hot); axis off; xlabel('z'); ylabel('x');
+
+        lk = x_shift/z_shift;
+        lb = round(Nz/2)-z_shift - lk*(Nx/2 - x_shift);
+
+    case 'twopoint_x'
+        obj3d = zeros(Ny, Nx, Nz);       
+        
+        r01 = Nx/2-x_shift;
+        r02 = Nx/2+x_shift;
+        
+        [x, y]= meshgrid(1:Nx, 1:Ny);
+%         obj3d = double(sqrt((x-r01).^2 + (y-Ny/2).^2)<x_shift) + double(sqrt((x-r02).^2 + (y-Ny/2).^2)<x_shift);
+        obj3d(Ny/2, Nx/2 - x_shift, Nz) = 1;
+        obj3d(Ny/2, Nx/2 + x_shift, Nz) = 1;
+
      case 'SNUE'
         % Transmitance should be 0~1
         S = mat2gray((imread('S.tif')));   
@@ -37,6 +62,17 @@ switch obj_name
         obj3d(:,:,3)=0.8*N;
         obj3d(:,:,4)=0.9*U;
         obj3d(:,:,5)=1*E;
+        
+    case 'finger'
+        % Transmitance should be 0~1
+        finger1 = mat2gray((imread('fingerprint1.tif')));   
+        finger2 = mat2gray((imread('fingerprint2.tif')));
+        finger3 = mat2gray((imread('fingerprint3.tif')));
+          
+        obj3d = zeros(Nx, Ny, Nz);
+        obj3d(:,:,1)=0.9*finger1;
+        obj3d(:,:,2)=0.8*finger2;
+%         obj3d(:,:,3)=0.9*finger3;
         
      case 'geo'
         obj3d = zeros(Nx, Ny, Nz);
@@ -112,8 +148,9 @@ figure;
 show3d(obj3d, 0.01);
 title('Object');
 print('-dpng', [outdir, obj_name, '.png']);
-% print('-dsvg', [outdir, obj_name, '.svg']);
-% fig2svg([outdir, obj_name, '.svg']);
+
+
+% figure; imagesc(obj3d);axis image; drawnow; colormap(hot); colorbar; axis off;
 
 save([indir, obj_name, '_3d.mat'], 'obj3d');
 
