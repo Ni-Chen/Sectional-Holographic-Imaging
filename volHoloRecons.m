@@ -1,9 +1,24 @@
+
+%{
+----------------------------------------------------------------------------------------------------
+Name: Volume hologram reconstruction with deconvolution
+
+Author:   Ni Chen (chenni@snu.ac.kr)
+Date:
+Modified:
+
+Reference:
+-`
+----------------------------------------------------------------------------------------------------
+%}
+
 %% Volume hologram reconstruction with deconvolution
 % Name: Volume hologram reconstruction with deconvolution
 % Author:   Ni Chen (chenni@snu.ac.kr)
 % Date:
 % Modified:
 % Reference:
+
 
 %% Initialization
 close all; clear; clc;
