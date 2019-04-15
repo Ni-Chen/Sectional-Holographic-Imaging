@@ -33,9 +33,9 @@ addpath(genpath('./function/'));  % Add funtion path with sub-folders
 
 indir = './data/';  % Hologram data
 
-% Simulations: random, geo, overlap, cirhelix, conhelix, SNUE
+% Simulations: random, geo, overlap, cirhelix, conhelix, SNUE, DISP
 % Experiments: dandelion, sh, beads, res, hair
-obj_name = 'random';
+obj_name = 'DISP';
 holo_type = 'inline';  % complex; inline; offline;
 
 % Output setting
