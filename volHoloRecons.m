@@ -20,8 +20,8 @@ indir = './data/';  % Hologram data
 
 % Simulations: random, geo, overlap, cirhelix, conhelix, SNUE
 % Experiments: dandelion, sh, beads, res, hair
-obj_name = 'cirhelix';
-holo_type = 'inline';  % complex; inline; offline;
+obj_name = 'SNUE';
+holo_type = 'complex';  % complex; inline; offline;
 
 % Output setting
 isDebug = 1;
@@ -61,23 +61,24 @@ if any(strcmp(obj_name, {'geo', 'overlap', 'random', 'conhelix', 'cirhelix', 'SN
             tau = 0.1;   % This effects, need further investigation
             tau_psi = 0.25;
             
-            tau = 0.005;   % This effects, need further investigation
-            tau_psi = 0.2;
-            
-            holo = holoNorm(holo);
+%             tau = 0.005;   % This effects, need further investigation
+%             tau_psi = 0.2;        
+           
         
         case 'inline'
             %{
               Inline hologram, I = |R|^2 + OR* + O*R + |O|^2, |R|^2 can be captured directly, 
-              OR* + O*R + |O|^2 = iFT(FT(I) - FT(|R|^2 )), suppose |R|=1, real(OR* + O*R)=2real(O)
+              OR* + O*R + |O|^2 = iFT(FT(I) - FT(|R|^2 )), suppose |R|=1, real(OR* + O*R)~=2real(O)
             %}
             holo = prop_field + conj(prop_field) + sum(obj3d.^2,3)/Nz; 
+            holo = prop_field  + sum(obj3d.^2,3)/Nz; % Compressive holography
 
-            holo = holo./max(abs(holo(:)));
-%             holo = abs(holo)./max(abs(holo(:))).*exp(1i*angle(holo));
+%             holo = holo./max(abs(holo(:)));
         case 'offline'
     end
     
+    holo = holoNorm(holo);
+     
     % add noise
     holo = awgn(holo, 40);  % holo = imnoise(holo, 'gaussian', 0, 0.001);
     
