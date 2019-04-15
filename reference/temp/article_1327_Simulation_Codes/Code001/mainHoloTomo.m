@@ -11,8 +11,8 @@ lambda=0.633;  % wavelength (um)
 detector_size=30;  % pixel pitch (um)
 sensor_size=nx*detector_size;  % detector size (um)
 deltaZ=20*1000;  % axial spacing (um)
-% offsetZ=0*1000;  % distance from detector to first reconstructed plane (um)
-offsetZ=50*1000;  % distance from detector to first reconstructed plane (um)
+offsetZ=0*1000;  % distance from detector to first reconstructed plane (um)
+offsetZ=10000;  % Chen 
 deltaX=detector_size;
 deltaY=detector_size;
 Nx=nx;
@@ -32,6 +32,9 @@ f(:,:,2)=0.7*D48;
 f(:,:,3)=0.5*I48;
 f(:,:,4)=1.0*S48;
 f(:,:,5)=0.9*P48;
+
+obj3d = f;
+save(['DISP_3d.mat'], 'obj3d');
 
 figure;imagesc(plotdatacube(abs(f)));title('3D object');axis image;drawnow;
 axis off; colormap(hot); colorbar;
@@ -63,8 +66,9 @@ S=(ifft2(ifftshift(cEsp)));
 
 % diffracted field
 g= S+f(:,:,2).^2+f(:,:,3).^2+f(:,:,4).^2+f(:,:,5).^2;
-% g= S+conj(S)+f(:,:,2).^2+f(:,:,3).^2+f(:,:,4).^2+f(:,:,5).^2;
 
+% g= S+conj(S)+f(:,:,2).^2+f(:,:,3).^2+f(:,:,4).^2+f(:,:,5).^2; % Chen
+% g = g./max(abs(g(:)));  % Chen
 
 
 figure;imagesc(abs(g));title('Diffracted field');axis image;
@@ -112,5 +116,5 @@ f_reconstruct=reshape(MyV2C(f_reconstruct),nx,ny,nz);
 figure;imagesc(plotdatacube(abs(f_reconstruct)));title('Compressive reconstruction');axis image;drawnow;
 axis off; colormap(hot); colorbar;
 
-figure; semilogy(times_twist, obj_twist, 'LineWidth',2); ylabel('objective distance'); xlabel('CPU time (sec)');
-figure; plot(times_twist, mse_twist, 'LineWidth',2); ylabel('MSE'); xlabel('CPU time (sec)');
+% figure; semilogy(times_twist, obj_twist, 'LineWidth',2); ylabel('objective distance'); xlabel('CPU time (sec)');
+% figure; plot(times_twist, mse_twist, 'LineWidth',2); ylabel('MSE'); xlabel('CPU time (sec)');

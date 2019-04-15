@@ -58,10 +58,10 @@ switch obj_name
         E = mat2gray((imread('E.tif')));
          
         obj3d = zeros(Nx, Ny, Nz);
-        obj3d(:,:,2)=0.6*S;
+        obj3d(:,:,2)=0.7*S;
         obj3d(:,:,3)=0.8*N;
-        obj3d(:,:,4)=0.9*U;
-        obj3d(:,:,5)=1*E;
+        obj3d(:,:,4)=1*U;
+        obj3d(:,:,5)=0.9*E;
         
     case 'finger'
         % Transmitance should be 0~1
