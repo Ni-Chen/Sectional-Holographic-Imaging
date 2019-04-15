@@ -1,3 +1,4 @@
+
 %{
 ----------------------------------------------------------------------------------------------------
 Name: Volume hologram reconstruction with deconvolution
@@ -11,6 +12,15 @@ Reference:
 ----------------------------------------------------------------------------------------------------
 %}
 
+%% Volume hologram reconstruction with deconvolution
+% Name: Volume hologram reconstruction with deconvolution
+% Author:   Ni Chen (chenni@snu.ac.kr)
+% Date:
+% Modified:
+% Reference:
+
+
+%% Initialization
 close all; clear; clc;
 
 FT2 = @(x) ifftshift(fft2(fftshift(x)));
@@ -19,21 +29,20 @@ iFT2 = @(x) ifftshift(ifft2(fftshift(x)));
 FT = @(x) ifftshift(fft(fftshift(x)));
 iFT = @(x) ifftshift(ifft(fftshift(x)));
 
-%% ====================================== Parameters ===============================================
 addpath(genpath('./function/'));  % Add funtion path with sub-folders
 
 indir = './data/';  % Hologram data
 
 % Simulations: random, geo, overlap, cirhelix, conhelix, SNUE
 % Experiments: dandelion, sh, beads, res, hair
-obj_name = 'beads';
+obj_name = 'SNUE';
 holo_type = 'complex';  % complex; inline; offline;
 
 % Output setting
 isDebug = 1;
 
 % Deconvolution setting
-iter_num = 1000;
+iter_num = 100;
 regu_type = 'TV';  % 'TV', 'L1'
 deconv_type = 'TwIST';  % 'TwIST','GPSR', TVAL3, SALSA, NESTA, TVPD
 
@@ -43,14 +52,15 @@ else
     outdir = './Complex/figure/';  % Output images for paper writing
 %     outdir = './Sectional/figure/';  % Output images for paper writing
 end
+%% 
+%% Hologram Generation / loading (experimental) 
 
-%% ======================================= Hologram ================================================
 run([indir, obj_name, '_param.m']);  % Parameters of the object and hologram 
 % [otf3d, psf3d, pupil3d] = OTF3D(Ny, Nx, Nz, lambda, deltaX, deltaY, deltaZ, offsetZ, sensor_size);
-[otf3d, psf3d, pupil3d] = OTF3D_z(Ny, Nx, lambda, pps, z);
+[otf3d, psf3d, pupil3d] = OTF3D(Ny, Nx, lambda, pps, z);
 
 
-if any(strcmp(obj_name, {'geo', 'overlap', 'random', 'conhelix', 'cirhelix', 'SNUE'}))
+if any(strcmp(obj_name, {'geo', 'overlap', 'random', 'conhelix', 'cirhelix', 'SNUE', 'finger'}))
 % Simulation data
     issim = 1;    
     load([indir, obj_name, '_3d.mat']);
@@ -66,20 +76,24 @@ if any(strcmp(obj_name, {'geo', 'overlap', 'random', 'conhelix', 'cirhelix', 'SN
             tau = 0.1;   % This effects, need further investigation
             tau_psi = 0.25;
             
-            holo = holoNorm(holo);
+%             tau = 0.005;   % This effects, need further investigation
+%             tau_psi = 0.2;        
+           
         
         case 'inline'
             %{
               Inline hologram, I = |R|^2 + OR* + O*R + |O|^2, |R|^2 can be captured directly, 
-              OR* + O*R + |O|^2 = iFT(FT(I) - FT(|R|^2 )), suppose |R|=1, real(OR* + O*R)=2real(O)
+              OR* + O*R + |O|^2 = iFT(FT(I) - FT(|R|^2 )), suppose |R|=1, real(OR* + O*R)~=2real(O)
             %}
             holo = prop_field + conj(prop_field) + sum(obj3d.^2,3)/Nz; 
+            holo = prop_field  + sum(obj3d.^2,3)/Nz; % Compressive holography
 
-            holo = holo./max(abs(holo(:)));
-%             holo = abs(holo)./max(abs(holo(:))).*exp(1i*angle(holo));
+%             holo = holo./max(abs(holo(:)));
         case 'offline'
     end
     
+    holo = holoNorm(holo);
+     
     % add noise
     holo = awgn(holo, 40);  % holo = imnoise(holo, 'gaussian', 0, 0.001);
     
@@ -96,17 +110,20 @@ else
 end
 
 % [sigma, mu]= noiseAnalysis(holo)
-% holo = holodenoise(holo); % Filter noise    
+% holo = holodenoise(holo); % Filter noise
 
-%% ========================== Reconstruction with back-propagation =================================
 
+%% Reconstruction with back-propagation 
 reobj_raw = iMatProp3D(holo, otf3d, pupil3d, holo_type);
 temp = reobj_raw;
-write3d(abs(temp), z*1e6, outdir, obj_name);
-% write3d(abs(temp), z_scope*1e6, outdir, obj_name);
-figure; imagesc(plotdatacube(abs(temp))); title('BackPropagation'); axis image; drawnow; colormap(hot); colorbar; axis off;
 
-%% ============= Construct Minimization problem and Reconstruction with deconvolution ==============
+% write3d(abs(temp), z*1e6, outdir, obj_name);
+figure; imagesc(plotdatacube(abs(temp))); title('BackPropagation'); axis image; drawnow; colormap(hot); colorbar; axis off;
+% figure; imagesc(plotdatacube(angle(pupil3d))); title('BackPropagation'); axis image; drawnow; colormap(hot); colorbar; axis off;
+%% 
+%% Reconstruction with deconvolution
+% Construct Minimization problem 
+
 A_fun = @(field3d_vec) VecProp3D(field3d_vec, otf3d, pupil3d, holo_type);
 AT_fun = @(field2d_vec) iVecProp3D(field2d_vec, otf3d, pupil3d, holo_type);
 
@@ -118,10 +135,12 @@ Nzv = 1;
 % are independently processed in a vectorized form.
 holo_vec = C2V(holo(:));
 
+% Solving Minimization problem withdifferent deconvolution algorithms
+
 switch deconv_type
     case 'TwIST'  % works for both complex and inline holograms, but very slowly
-%         tau = 0.01;   % This effects, need further investigation
-%         tau_psi = 0.15;
+        tau = 0.1;   % This effects, need further investigation
+        tau_psi = 0.25;
         tolA = 1e-6;
         
         if strcmp(regu_type, 'L1')
@@ -307,8 +326,9 @@ switch deconv_type
         
     otherwise        
 end
+%% 
+%% Show the images 
 
-%% ======================================= Show the images =========================================
 if isDebug
 %     figure; semilogy(objective, 'LineWidth',2); ylabel('objective distance'); xlabel('Iteration');
 %     print('-dpng', [out_filename, 'objdis.png']);
@@ -322,7 +342,7 @@ if isDebug
     % TwIST reconstruction
     temp = abs(reobj_deconv);
     temp = (temp-min(temp(:)))/(max(temp(:))-min(temp(:)));
-    figure; imagesc(plotdatacube(abs(temp))); title('Reconstruction'); axis image; drawnow; colormap(hot); colorbar; axis off;
+    figure; imagesc(plotdatacube(abs(temp))); title('Deconvolution'); axis image; drawnow; colormap(hot); colorbar; axis off;
     print('-dpng', [out_filename, deconv_type, '_tau', num2str(tau), '_psi' , num2str(tau_psi), '_', num2str(iter_num), '.png']);
 
 %     figure; show3d(abs(reobj_deconv), 0.01); axis normal; set(gcf,'Position',[0,0,500,500]);

@@ -12,7 +12,8 @@ function field3d = iMatProp3D(field2d, otf3d, pupil3d, holo_type)
           Gabor hologram: I = |R|^2 + |O|^2 + R*O + RO*
           Substract background: I_prime = |O|^2 + R*O + RO* = 2 real(O) + |O|^2 = 2 real(O) + err
         %}
-        field2d = 2*real(field2d);
+        field2d = real(field2d);
+%         field2d = 2*real(field2d);
     end
 
     plane_field_ft = conj(iFT2(conj(field2d)));

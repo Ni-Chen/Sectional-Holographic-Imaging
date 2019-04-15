@@ -12,6 +12,9 @@ detector_size=30;  % pixel pitch (um)
 sensor_size=nx*detector_size;  % detector size (um)
 deltaZ=20*1000;  % axial spacing (um)
 offsetZ=0*1000;  % distance from detector to first reconstructed plane (um)
+% offsetZ=0*1000;  % distance from detector to first reconstructed plane (um)
+offsetZ=50*1000;  % distance from detector to first reconstructed plane (um)
+
 deltaX=detector_size;
 deltaY=detector_size;
 Nx=nx;
@@ -61,9 +64,14 @@ S=(ifft2(ifftshift(cEsp)));
 % g = real(g);
 
 % diffracted field
+
 g=S+conj(S)+f(:,:,2).^2+f(:,:,3).^2+f(:,:,4).^2+f(:,:,5).^2;
 % S = S./max(max(abs(S)));
 % g= S + conj(S) + sum(f.^2,3)/Nz;
+
+g= S+f(:,:,2).^2+f(:,:,3).^2+f(:,:,4).^2+f(:,:,5).^2;
+% g= S+conj(S)+f(:,:,2).^2+f(:,:,3).^2+f(:,:,4).^2+f(:,:,5).^2;
+
 
 
 figure;imagesc(abs(g));title('Diffracted field');axis image;
