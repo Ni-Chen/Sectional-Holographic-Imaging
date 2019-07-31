@@ -14,10 +14,10 @@ holo_3 = holo_3_amp.*exp(1i*holo_3_phase);
 [Ny, Nx] = size(holo_3);
 
 %% ======================================= Hologram ================================================
-[otf3d, ~, pupil3d] = OTF3D_z(Ny, Nx, lambda, pps, -3e-3);
+[otf3d, ~, pupil3d] = OTF3D(Ny, Nx, lambda, pps, 0e-3);
 
 %% ========================== Reconstruction with back-propagation =================================
-holo_capture = iMatProp3D(holo_3, otf3d, pupil3d, 'complex');
+holo_capture = iMatProp3D(holo_3, otf3d, pupil3d);
 
 holo = holo_capture;
 holo = max(holo(:)) - holo; % holo = holo*(-1)+abs(min(min(holo*(-1))));
@@ -26,10 +26,13 @@ holo = holoNorm(holo);
 holo = imadjust(abs(holo)).*exp(1i*angle(holo));
 holo = holoNorm(holo);
 
+% imwrite(real(holo),'holo_real.png');
+% imwrite(imag(holo),'holo_imag.png');
+
 save(['../hair.mat'], 'holo');
  
-[otf3d, psf3d, pupil3d] = OTF3D_z(Ny, Nx, lambda, pps, [132e-3 3e-3 10e-3]);
-holo_reobj = iMatProp3D(holo, otf3d, pupil3d, 'complex');
+[otf3d, psf3d, pupil3d] = OTF3D(Ny, Nx, lambda, pps, ([135 0 8])*1e-3); %[135 0 8]*1e-3
+holo_reobj = iMatProp3D(holo, otf3d, pupil3d);
 
 % Back vecProp reconstruction
 figure; imagesc(plotdatacube(abs(holo))); title('Hologram'); axis image; drawnow; colormap(hot); colorbar; axis off;

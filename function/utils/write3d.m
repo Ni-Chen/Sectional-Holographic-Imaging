@@ -5,6 +5,6 @@ function write3d(data, Z, outdir, filename)
 %         temp = squeeze(data(:, :, iz));
         temp = data(:, :, iz);
         temp = mat2gray(temp);
-        imwrite(temp, [outdir, filename, '_', num2str(Z(iz)/1000), 'mm.png']);
+        imwrite(temp, [outdir, filename, '_', num2str(Z(iz)), 'mm.png']);
     end
 end

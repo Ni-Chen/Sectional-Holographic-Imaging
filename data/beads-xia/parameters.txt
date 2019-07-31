@@ -1,0 +1,3 @@
+532nm
+pitch 3.45um
+distance 0.013m
