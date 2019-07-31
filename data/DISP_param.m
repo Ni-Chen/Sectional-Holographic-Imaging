@@ -6,7 +6,7 @@ Nz = 5;
 %% System specification
 lambda  = 633e-9;  % wavelength 
 pps     = 30e-6;   % pixel pitch of the hologram 
-z0      = 10e-3;   % distance from detector to center of the object 
+z0      = 0e-3;   % distance from detector to center of the object 
 
 Lx = Nx*pps;  % size of detector (um)
 NA = Lx/2/sqrt(z0^2+(Lx/2)^2)
@@ -16,7 +16,7 @@ res_z = 2*lambda/(NA^2)
 % res_x = lambda/2/NA
 
 % dz = res_z*1
-dz = 20e-3;  % axial spacing (um)
+dz = 10e-3;  % axial spacing (um)
 
 
 %% Indirect parameters

@@ -15,7 +15,8 @@ lambda = 532e-9;    % wavelength of illumination beam
 pps = 3.45e-6;      % pixel pitch of CCD camera
 
 % z = [132 -4 3]*1e-3;
-z = [136 3 10]*1e-3;
+% z = [135 0 8]*1e-3;
+z = [85 -50 -42]*1e-3;
 % z = [132 133 134 135 136]*1e-3;
 Nz = length(z);
 
@@ -28,7 +29,7 @@ tau_psi = 0.2;
 %% ========================================== Resize =================================================
 load('hair.mat');
 
-[holo, pps] = holoResize(holo, pps, 512, 0);
+[holo, pps] = holoResize(holo, pps, 128, 20);
 [Ny, Nx] = size(holo);
 
 
