@@ -10,18 +10,22 @@ addpath(genpath('./function/'));
 % reset(gpuDevice(1));
 
 %% ----------------------------------------- Parameters --------------------------------------------
-obj_name = 'star';  %'random', 'conhelix', 'circhelix', 'star'
+obj_name = 'circhelix';  %'random', 'conhelix', 'circhelix', 'star'
 
 isGPU = 0;
-isNonNeg = 0;
+isNonNeg = 1;
 cost_type = 'LS';  % LS, KL
 reg_type = '3DTV';   % TV:, HS:Hessian-Shatten
-solv_type = 'ADMM';  % CP, ADMM, CG, RL, FISTA
+solv_type = 'ADMM';  % CP, ADMM, CG, RL, FISTA, VMLMB
 
-maxit = 200;       % Max iterations
+maxit = 500;       % Max iterations
 
-file_name = [obj_name, '_', cost_type, '+', reg_type, '(Neg ', num2str(isNonNeg), ')+', solv_type];
-
+% file_name = [obj_name, '_', cost_type, '+', reg_type, '(Neg ', num2str(isNonNeg), ')+', solv_type];
+if isNonNeg
+    file_name = [obj_name, '_', cost_type, '+', reg_type, '(Neg ', num2str(isNonNeg), ')+', solv_type];
+else
+    file_name = [obj_name, '_', cost_type, '+', reg_type, '+', solv_type];
+end
 %% fix the random seed (for reproductibility)
 rng(1);
 useGPU(isGPU);
@@ -59,23 +63,23 @@ switch reg_type
         G = LinOpGrad(C.sizeout,[1,2]);       % Operator Gradient
         R_N12 = CostMixNorm21(G.sizeout,4);   % Mixed Norm 2-1
         
+        R_POS = CostNonNeg(sz);           % Non-Negativity
+        Id = LinOpIdentity(sz);
     case '3DTV'  % 3D TV regularizer
         G = LinOpGrad(C.sizeout, [1,2,3]);    % TV regularizer: Operator gradient
         R_N12 = CostMixNorm21(G.sizeout,4);   % TV regularizer: Mixed norm 2-1
+        
+        R_POS = CostNonNeg(sz);           % Non-Negativity
         Id = LinOpIdentity(sz);               % Identity Operator
         
     case 'HS'  % Hessian-Shatten
         G = LinOpHess(C.sizeout);                 % Hessian Operator
         R_N12 = CostMixNormSchatt1([sz, 3],1); % Mixed Norm 1-Schatten (p = 1)
+        
+        R_POS = CostNonNeg(sz);           % Non-Negativity
+        Id = LinOpIdentity(sz);
 end
 
-if isNonNeg
-    R_POS = CostNonNeg(sz);           % Non-Negativity
-    Id = LinOpIdentity(sz);
-    file_name = [obj_name, '_', cost_type, '+', reg_type, '(Neg ', num2str(isNonNeg), ')+', solv_type];
-else
-    file_name = [obj_name, '_', cost_type, '+', reg_type, '+', solv_type];
-end
 %% ---------------------------------------- Optimization --------------------------------------------
 
 switch solv_type   
@@ -110,10 +114,10 @@ switch solv_type
         
     case 'FISTA' % Forward-Backward Splitting optimization  
         lamb = 1e-3;  % circhelix: 1e-3
-%         optSolve = OptiFBS(F,R_POS);
+        optSolve = OptiFBS(F,R_POS);
 %         optSolve = OptiFBS(F, lamb*R_N12);
         optSolve.fista = true;   % true if the accelerated version FISTA is used
-        optSolve.gam = 1e-5;     % descent step
+        optSolve.gam = 5;     % descent step
         optSolve.momRestart  = false; % true if the moment restart strategy is used
         
     case 'RL' % Richardson-Lucy algorithm
@@ -123,29 +127,33 @@ switch solv_type
         
     case 'PD' % PrimalDual Condat KL
         lamb = 1e-3;                  % Hyperparameter
-        if ~isNonNeg
-            Fn = {lamb*R_N12, KL};
-            Hn = {Hess,H};
-            optSolve = OptiPrimalDualCondat([],R_POS,Fn,Hn);
-        else  % PD + LS + TV + NonNeg
+%         if ~isNonNeg
+%             Fn = {lamb*R_N12, KL};
+%             Hn = {Hess,H};
+%             optSolve = OptiPrimalDualCondat([],R_POS,Fn,Hn);
+%         else  % PD + LS + TV + NonNeg
             Fn = {lamb*R_N12};
             Hn = {G*C};
             optSolve = OptiPrimalDualCondat(F,R_POS,Fn,Hn);
-        end
+%         end
         optSolve.OutOp = OutputOptiSNR(1, im, round(maxit/10), [2 3]);
         optSolve.tau = 1;          % set algorithm parameters
         optSolve.sig = (1/optSolve.tau-F.lip/2)/G.norm^2*0.9;    %
         optSolve.rho = 1.95;          %
         
     case 'VMLMB' % optSolve LS 
+        lamb = 1e-3;                  % Hyperparameter
         if ~isNonNeg
-            optSolve = OptiVMLMB(F,[],[]);
-            optSolve.m = 2;  % number of memorized step in hessian approximation (one step is enough for quadratic function)
+            hyperB = CostHyperBolic(G.sizeout, 1e-7, 3)*G*C;
+            C1 = F + lamb*hyperB; 
+            C1.memoizeOpts.apply=true;
+            optSolve = OptiVMLMB(C,0,[]);
+            optSolve.m = 3;  % number of memorized step in hessian approximation (one step is enough for quadratic function)
         else
             hyperB = CostHyperBolic(G.sizeout, 1e-7, 3)*G;
-            C = F + lamb*hyperB; 
-            C.memoizeOpts.apply=true;
-            optSolve = OptiVMLMB(C,0.,[]);  
+            C1 = F + lamb*hyperB; 
+            C1.memoizeOpts.apply=true;
+            optSolve = OptiVMLMB(C1,0.,[]);  
             optSolve.m = 3; 
         end        
         
@@ -194,10 +202,10 @@ if img_num > 0
         
         legend_name = [legend_name, method_name{imidx}];
         
-        temp = abs((optSolve.xopt));  %temp = abs(gather(optSolve.xopt));
-        Orthoviews(temp,[], method_name{imidx});
-        temp = (temp-min(temp(:)))/(max(temp(:))-min(temp(:))); 
-        figure('Name', method_name{imidx}); show3d(temp, 0.05); axis normal;
+%         temp = abs(gather(optSolve.xopt));  %temp = abs(gather(optSolve.xopt));
+%         Orthoviews(temp,[], method_name{imidx});
+%         temp = (temp-min(temp(:)))/(max(temp(:))-min(temp(:))); 
+%         figure('Name', method_name{imidx}); show3d(temp, 0.05); axis normal;
     end
           
     figure('Name', 'Cost evolution'); 
