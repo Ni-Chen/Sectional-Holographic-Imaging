@@ -10,17 +10,17 @@ addpath(genpath('./function/'));
 % reset(gpuDevice(1));
 
 %% ----------------------------------------- Parameters --------------------------------------------
-obj_name = 'star';  %'random', 'conhelix', 'circhelix', 'star'
+obj_name = 'hair';  %'random', 'conhelix', 'circhelix', 'star', 
 
 isGPU = 0;
 isNonNeg = 0;
 cost_type = 'LS';  % LS, KL
-reg_type = '3DTV';   % TV:, HS:Hessian-Shatten
-solv_type = 'ADMM';  % CP, ADMM, CG, RL, FISTA
+reg_type = 'TV';   % TV:, HS:Hessian-Shatten
+solv_type = 'CP';  % CP, ADMM, CG, RL, FISTA
 
-maxit = 200;       % Max iterations
+maxit = 1000;       % Max iterations
 
-file_name = [obj_name, '_', cost_type, '+', reg_type, '(Neg ', num2str(isNonNeg), ')+', solv_type];
+file_name = [obj_name, '_', cost_type, '+', reg_type, '(NonNeg)+', solv_type];
 
 %% fix the random seed (for reproductibility)
 rng(1);
@@ -81,19 +81,19 @@ end
 switch solv_type   
     case 'CP'
         % ------------------------------- Chambolle-Pock  LS + TV ---------------------------------
-        lamb = 1e-3;  % circhelix: 1e-3
+        lamb = 0.0005;  % circhelix: 1e-3
 
         optSolve = OptiChambPock(lamb*R_N12,G*C,F);
-        optSolve.tau = 2;  % 1, algorithm parameters, 15
+        optSolve.tau = 0.1;  % 1, algorithm parameters, 15
         optSolve.sig = 1/(optSolve.tau*G.norm^2)*0.99;  % sig x tau x ?H?2 <= 1
 %         optSolve.gam = 1;  % 1 or 2
 %         optSolve.var = 1;  % 1: ; 2:
         
-        file_name = [file_name, '(', num2str(optSolve.tau) ,')'];
+        file_name = [file_name, '(L', num2str(lamb) ,',T', num2str(optSolve.tau) ,')'];
     case 'ADMM'
         %% ----------------------------------- ADMM LS + TV ----------------------------------------
-        lamb = 1e-3; % Hyperparameter, lamb = 1e-2;
-        file_name = [file_name, '(', num2str(lamb) ,')'];
+        lamb = 1e-2; % Hyperparameter, lamb = 1e-2;
+        
         
         if ~isNonNeg % ADMM LS + TV 
             Fn = {lamb*R_N12}; % Functionals F_n constituting the cost
@@ -104,6 +104,7 @@ switch solv_type
             Hn = {G*C, Id}; % Associated operators H_n
             rho_n = [1e-1, 1e-1]; % Multipliers rho_n
         end
+        file_name = [file_name, '(L', num2str(lamb) ,',R',num2str(rho_n(1)),')'];
 
         % Here no solver needed in ADMM since the operator H'*H + alpha*G'*G is invertible
         optSolve = OptiADMM(F,Fn,Hn,rho_n); % Declare optimizer
@@ -159,7 +160,8 @@ switch solv_type
         optSolve = OptiFGP(A,b);  
 end
 optSolve.maxiter = maxit;                             % max number of iterations
-optSolve.OutOp = OutputOptiSNR(1,im,round(maxit/10));
+% optSolve.OutOp = OutputOptiSNR(1,im,round(maxit/10));
+optSolve.OutOp = OutputOpti(1,round(maxit/10));
 optSolve.ItUpOut = round(maxit/10);         % call OutputOpti update every ItUpOut iterations
 optSolve.CvOp = TestCvgCombine(TestCvgCostRelative(1e-10), 'StepRelative', 1e-10);
 optSolve.run(zeros(size(otf)));             % run the algorithm
@@ -171,12 +173,17 @@ save(['./output/', file_name, '.mat'], 'optSolve');
 % figure; show3d(gather(im), 0.001); axis normal;
 % imdisp(abs(y),'Convolved mag', 1); imdisp(angle(y),'Convolved phase', 1);
 % 
-% % Back-propagation reconstruction
-% im_bp = LinOpAdjoint(H)*y;
+% Back-propagation reconstruction
+im_bp = LinOpAdjoint(H)*y;
 % Orthoviews(abs(im_bp),[],'BP Image');
+figure('Name', 'BP'); imagesc(plotdatacube(abs(im_bp)));  axis image; drawnow; colormap(hot);  axis off;
+
+
+temp = abs((optSolve.xopt));  %temp = abs(gather(optSolve.xopt));
+figure('Name', 'Deconv'); imagesc(plotdatacube(temp));  axis image; drawnow; colormap(hot);  axis off;
 
 % Deconvolution reconstruction comparison
-solve_lst = dir(['./output/', obj_name, '_*.mat']);
+solve_lst = dir(['./output/', obj_name, '*', solv_type, '*.mat']);
 img_num = length(solve_lst);
 
 if img_num > 0    
@@ -194,10 +201,12 @@ if img_num > 0
         
         legend_name = [legend_name, method_name{imidx}];
         
-        temp = abs((optSolve.xopt));  %temp = abs(gather(optSolve.xopt));
-        Orthoviews(temp,[], method_name{imidx});
-        temp = (temp-min(temp(:)))/(max(temp(:))-min(temp(:))); 
-        figure('Name', method_name{imidx}); show3d(temp, 0.05); axis normal;
+%         temp = abs((optSolve.xopt));  %temp = abs(gather(optSolve.xopt));
+% %         Orthoviews(temp,[], method_name{imidx});
+%         figure('Name', 'Deconv'); imagesc(plotdatacube(temp));  axis image; drawnow; colormap(hot);  axis off;
+%         
+%         temp = (temp-min(temp(:)))/(max(temp(:))-min(temp(:))); 
+%         figure('Name', method_name{imidx}); show3d(temp, 0.05); axis normal;
     end
           
     figure('Name', 'Cost evolution'); 
@@ -210,26 +219,16 @@ if img_num > 0
     set(gcf,'paperpositionmode','auto');
     print('-dpng', ['./output/', obj_name, '_cost.png']);
     
-    % Show SNR
-    figure('Name', 'SNR');    
-    grid; hold all; title('Evolution SNR');set(gca,'FontSize',10);
-    for imidx = 1:img_num   
-        semilogy(solve_result{imidx}.OutOp.iternum,solve_result{imidx}.OutOp.evolsnr,'LineWidth',1.5);
-    end
-    legend(legend_name,'Location','southeast');
-    xlabel('Iterations');ylabel('SNR (dB)');
-    set(gcf,'paperpositionmode','auto');
-    print('-dpng', ['./output/', obj_name, '_snr.png']);
+%     % Show SNR
+%     figure('Name', 'SNR');    
+%     grid; hold all; title('Evolution SNR');set(gca,'FontSize',10);
+%     for imidx = 1:img_num   
+%         semilogy(solve_result{imidx}.OutOp.iternum,solve_result{imidx}.OutOp.evolsnr,'LineWidth',1.5);
+%     end
+%     legend(legend_name,'Location','southeast');
+%     xlabel('Iterations');ylabel('SNR (dB)');
+%     set(gcf,'paperpositionmode','auto');
+%     print('-dpng', ['./output/', obj_name, '_snr.png']);
     
-    figure('Name', 'Time cost');    
-    hold on; grid; title('Runing Time');set(gca,'FontSize',12);
-    orderCol = get(gca,'ColorOrder');
-    for imidx = 1:img_num   
-        bar(imidx,[solve_result{imidx}.time],'FaceColor',orderCol(imidx,:),'EdgeColor','k');
-    end
-    set(gca,'xtick',1:img_num);ylabel('Time (s)'); set(gca,'xticklabels', legend_name);
-    set(gca,'XTickLabelRotation',50);
-    set(gcf,'paperpositionmode','auto');
-    print('-dpng', ['./output/', obj_name, '_time.png']);
 end
 

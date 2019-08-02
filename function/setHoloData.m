@@ -18,7 +18,7 @@ Copyright (C) 2019 Ni Chen nichen@snu.ac.kr
         run(['./data/', obj_name, '_param.m']);  % Parameters of the object and hologram
         y = holo;
         
-        H = LinOpWavePropKernel(lambda, Ny, Nz, pps, z);
+        H = LinOpWavePropKernel(lambda, Ny, Nx, pps, z);
         otf3d = H.mtf;
         
         im = [];        
