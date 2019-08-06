@@ -14,7 +14,7 @@ holo_3 = holo_3_amp.*exp(1i*holo_3_phase);
 [Ny, Nx] = size(holo_3);
 
 %% ======================================= Hologram ================================================
-[otf3d, ~, pupil3d] = OTF3D(Ny, Nx, lambda, pps, 0e-3);
+[otf3d, ~, pupil3d] = OTF3D(Ny, Nx, lambda, pps, -10e-3);
 
 %% ========================== Reconstruction with back-propagation =================================
 holo_capture = iMatProp3D(holo_3, otf3d, pupil3d);
@@ -31,7 +31,7 @@ holo = holoNorm(holo);
 
 save(['../hair.mat'], 'holo');
  
-[otf3d, psf3d, pupil3d] = OTF3D(Ny, Nx, lambda, pps, ([135 0 8])*1e-3); %[135 0 8]*1e-3
+[otf3d, psf3d, pupil3d] = OTF3D(Ny, Nx, lambda, pps, (10+[0  9  134])*1e-3); %[135 0 8]*1e-3
 holo_reobj = iMatProp3D(holo, otf3d, pupil3d);
 
 % Back vecProp reconstruction

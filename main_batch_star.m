@@ -14,10 +14,10 @@ obj_name = 'star';  %'random', 'conhelix', 'circhelix', 'star'
 isGPU = 0;
 isNonNeg = 0;
 cost_type = 'LS';  % LS, KL
-reg_type = 'TV';   % TV:, HS:Hessian-Shatten
+reg_type = '3DTV';   % TV:, HS:Hessian-Shatten
 solv_type = 'ADMM';  % CP, ADMM, CG, RL, FISTA, VMLMB
 
-maxit = 500;       % Max iterations
+maxit = 1000;       % Max iterations
 
 %% fix the random seed (for reproductibility)
 rng(1);
@@ -27,9 +27,9 @@ useGPU(isGPU);
 [im_ori, otf_ori, y_ori] = setHoloData(obj_name, 'Gaussian', 50);
 
 % CP: choose lambad and tau
-lamb_try = [0.5e-3 1e-3];
+lamb_try = [0.5e-3];
 tau_try = [0.5 1];   % for CP
-rho_try = [1e-0 1e-1 1e-2];   % for ADMM
+rho_try = [1e-1 1e-2];   % for ADMM
 
 % lamb_try = 0.5e-3;
 % tau_try = 1;
@@ -40,8 +40,8 @@ rho_try = [1e-0 1e-1 1e-2];   % for ADMM
 % lamb_try = 0.5e-3;
 % tau_try = 0.5;
 
-% lamb_try = 0.5e-3;
-% tau_try = 0.1;
+lamb_try =1e-3;
+rho_try = 0.1;
 
 n = 0;
 if strcmp(solv_type, 'CP')
@@ -84,6 +84,7 @@ for ilamb = 1:length(lamb_try)
 end
 if isGPU; reset(gpuDevice(1)); end
 % solve_lst = dir(['./output/', obj_name, '*', reg_type, '*', solv_type, '*.mat']);
-solve_lst = dir(['./output/',obj_name, '*', solv_type, '*.mat']);
+% solve_lst = dir(['./output/',obj_name, '*', solv_type, '*.mat']);
+solve_lst = dir(['./output/',obj_name, '*.mat']);
 run('dispPlotCmp.m');
 

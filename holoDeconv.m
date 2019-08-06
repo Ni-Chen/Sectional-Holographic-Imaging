@@ -20,19 +20,21 @@ switch reg_type
     case 'TV'  % TV regularizer
         G = LinOpGrad(C.sizeout,[1,2]);       % Operator Gradient
         R_N12 = CostMixNorm21(G.sizeout,4);   % Mixed Norm 2-1
+%         R_N12 = CostMixNorm21NonNeg(G.sizeout,4);   % Mixed Norm 2-1
         
         R_POS = CostNonNeg(sz);           % Non-Negativity
         Id = LinOpIdentity(sz);
     case '3DTV'  % 3D TV regularizer
         G = LinOpGrad(C.sizeout, [1,2,3]);    % TV regularizer: Operator gradient
         R_N12 = CostMixNorm21(G.sizeout,4);   % TV regularizer: Mixed norm 2-1, check
+%         R_N12 = CostMixNorm21NonNeg(G.sizeout,4);   % Mixed Norm 2-1
         
         R_POS = CostNonNeg(sz);           % Non-Negativity
         Id = LinOpIdentity(sz);               % Identity Operator
         
     case 'HS'  % Hessian-Shatten
-        G = LinOpHess(C.sizeout);                 % Hessian Operator
-        R_N12 = CostMixNormSchatt1([sz, 3],1); % Mixed Norm 1-Schatten (p = 1)
+        G = LinOpHess(C.sizeout, 'circular', [1,2]);                 % Hessian Operator
+        R_N12 = CostMixNormSchatt1(G.sizeout,1); % Mixed Norm 1-Schatten (p = 1)
         
         R_POS = CostNonNeg(sz);           % Non-Negativity
         Id = LinOpIdentity(sz);
@@ -68,20 +70,20 @@ switch solv_type
         optSolve = OptiADMM(F,Fn,Hn,rho_n); % Declare optimizer
         
     case 'FISTA' % Forward-Backward Splitting optimization  
-        lamb = 1e-3;  % circhelix: 1e-3
+%         lamb = 1e-3;  % circhelix: 1e-3
         optSolve = OptiFBS(F,R_POS);
 %         optSolve = OptiFBS(F, lamb*R_N12);
         optSolve.fista = true;   % true if the accelerated version FISTA is used
-        optSolve.gam = 5;     % descent step
+        optSolve.gam = 1;     % descent step
         optSolve.momRestart  = false; % true if the moment restart strategy is used
         
     case 'RL' % Richardson-Lucy algorithm
-        lamb = 1e-2; % Hyperparameter for TV
+%         lamb = 1e-2; % Hyperparameter for TV
         optSolve = OptiRichLucy(F, 1, lamb);
         optSolve.epsl = 1e-6; % smoothing parameter to make TV differentiable at 0 
         
     case 'PD' % PrimalDual Condat KL
-        lamb = 1e-3;                  % Hyperparameter
+%         lamb = 1e-3;                  % Hyperparameter
 %         if ~isNonNeg
 %             Fn = {lamb*R_N12, KL};
 %             Hn = {Hess,H};
@@ -91,10 +93,10 @@ switch solv_type
             Hn = {G*C};
             optSolve = OptiPrimalDualCondat(F,R_POS,Fn,Hn);
 %         end
-        optSolve.OutOp = OutputOptiSNR(1, im, round(maxit/10), [2 3]);
+%         optSolve.OutOp = OutputOptiSNR(1, im, round(maxit/10), [2 3]);
         optSolve.tau = 1;          % set algorithm parameters
         optSolve.sig = (1/optSolve.tau-F.lip/2)/G.norm^2*0.9;    %
-        optSolve.rho = 1.95;          %
+        optSolve.rho = OptPara;          %
         
     case 'VMLMB' % optSolve LS 
         lamb = 1e-3;                  % Hyperparameter
@@ -113,21 +115,21 @@ switch solv_type
         end        
         
     case 'CG'  % ConjGrad LS 
-        A = H.makeHtH();
-        b = H'*y;
-        optSolve = OptiConjGrad(A,b);  
-        optSolve.OutOp = OutputOptiConjGrad(1,dot(y(:),y(:)),im,40);  
+        A = H;
+        b = y;
+        optSolve = OptiConjGrad(A,b*C);  
+%         optSolve.OutOp = OutputOptiConjGrad(1,dot(y(:),y(:)),im,40);  
         
     case 'FCG'  % ConjGrad LS 
         optSolve = OptiFGP(A,b);  
 end
 
 optSolve.maxiter = maxit;                             % max number of iterations
-optSolve.OutOp = OutputOptiSNR(1,im,round(maxit/10));
+% optSolve.OutOp = OutputOptiSNR(1,im,round(maxit/10));  % for simulation
+optSolve.OutOp = OutputOpti(1,round(maxit/10));
 optSolve.ItUpOut = round(maxit/10);         % call OutputOpti update every ItUpOut iterations
 optSolve.CvOp = TestCvgCombine(TestCvgCostRelative(1e-8), 'StepRelative', 1e-8);
 % optSolve.OutOpti = OutputOpti(true,round(maxit/10),costIndex)
 optSolve.run(zeros(size(otf)));             % run the algorithm
 
-save(['./output/', file_name, '.mat'], 'optSolve');
-clear otf im y optSolve
+

@@ -15,8 +15,7 @@ lambda = 532e-9;    % wavelength of illumination beam
 pps = 3.45e-6;      % pixel pitch of CCD camera
 
 % z = [132 -4 3]*1e-3;
-% z = [0 8 135]*1e-3;
-z = [-16 -8 0 8 16 24 32 40 48 56 64 72 80 88 96 104 120 128 135 143]*1e-3;
+z = 10e-3+[0 8 135]*1e-3;
 % z = [85 -50 -42]*1e-3;
 % z = [132 133 134 135 136]*1e-3;
 Nz = length(z);
