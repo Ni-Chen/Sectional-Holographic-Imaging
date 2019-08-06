@@ -15,7 +15,7 @@ lambda = 473e-9;    % wavelength of illumination beam
 pps = 3.45e-6;      % pixel pitch of CCD camera
 
 % z = [138 155]*1e-3;
-z = [121 138 155 172]*1e-3;
+z = [135 138 141 155 159]*1e-3;
 
 Nz = length(z);
 
@@ -24,7 +24,7 @@ tau_psi = 0.2;
 %% ========================================== Resize =================================================
 load('fiber.mat');
 
-[holo, pps] = holoResize(holo, pps, 1024, 20);
+[holo, pps] = holoResize(holo, pps, 512, 5);
 [Ny, Nx] = size(holo);
 
 
