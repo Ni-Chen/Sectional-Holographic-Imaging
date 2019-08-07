@@ -47,7 +47,7 @@ switch solv_type
 %         lamb = 1e-3;  % circhelix: 1e-3       
         optSolve = OptiChambPock(lamb*R_N12,G*C,F);
         optSolve.tau = OptPara;  % 1, algorithm parameters, 15
-        optSolve.sig = 1/(optSolve.tau*G.norm^2)*0.99;  % sig x tau x ?H?2 <= 1, 1/(optSolve.tau*G.norm^2)*0.99
+        optSolve.sig = 1/(optSolve.tau*G.norm^2)*0.99;  % sig x tau x ?H?2 <= 1
 %         optSolve.gam = 1;  % 1 or 2
 %         optSolve.var = 1;  % 1: ; 2:
         
@@ -59,23 +59,31 @@ switch solv_type
             Fn = {lamb*R_N12}; % Functionals F_n constituting the cost
             Hn = {G*C}; % Associated operators H_n
             rho_n = [OptPara]; % Multipliers rho_n, [1e-1];
-            optSolve = OptiADMM(F,Fn,Hn,rho_n); % Declare optimizer
-        else  % ADMM LS + TV + NonNeg  
+            
+        else  % ADMM LS + TV + NonNeg 
+%             Fn = {lamb*R_N12, R_POS}; % Functionals F_n constituting the cost
+%             Hn = {G*C, Id}; % Associated operators H_n
+%             rho_n = [OptPara, OptPara]; % Multipliers rho_n     
             if  strcmp(cost_type, 'LS') % ADMM LS + TV + NonNeg
                 Fn = {lamb*R_N12, R_POS}; % Functionals F_n constituting the cost
                 Hn = {G*C, Id}; % Associated operators H_n
                 rho_n = [OptPara, OptPara]; % Multipliers rho_n
                 
                 optSolve = OptiADMM(F,Fn,Hn,rho_n); % Declare optimizer
+%                 optSolve.OutOp=OutputOptiSNR(1,im,round(maxit/10),[1 2]);
+                
             elseif strcmp(cost_type, 'KL') % ADMM LS + TV + NonNeg
                 Fn={KL,lamb*R_N12,R_POS};
-                Hn={H,G*C,LinOpDiag(sz)};
+                Hn={H,G,LinOpDiag(sz)};
                 rho_n=[OptPara,OptPara,OptPara];
                 
                 optSolve=OptiADMM([],Fn,Hn,rho_n);
 %                 optSolve.OutOp=OutputOptiSNR(1,im,round(maxit/10),[1 2]);
             end
-        end    
+        end
+        
+        % Here no solver needed in ADMM since the operator H'*H + alpha*G'*G is invertible
+        optSolve = OptiADMM(F,Fn,Hn,rho_n); % Declare optimizer
         
     case 'FISTA' % Forward-Backward Splitting optimization  
 %         lamb = 1e-3;  % circhelix: 1e-3

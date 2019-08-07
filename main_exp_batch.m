@@ -11,10 +11,10 @@ addpath(genpath('./function/'));
 obj_name = 'fiber';  %'random', 'conhelix', 'circhelix', 'star'
 
 isGPU = 1;
-isNonNeg = 0;
-cost_type = 'LS';  % LS, KL
-reg_type = 'HS';   % TV:, HS:Hessian-Shatten
-solv_type = 'CP';  % CP, ADMM, CG, RL, FISTA, VMLMB
+isNonNeg = 1;
+cost_type = 'KL';  % LS, KL
+reg_type = 'TV';   % TV:, HS:Hessian-Shatten
+solv_type = 'ADMM';  % CP, ADMM, CG, RL, FISTA, VMLMB
 
 maxit = 100;       % Max iterations
 
@@ -23,7 +23,7 @@ maxit = 100;       % Max iterations
 % tau_try = [0.5 1 1.5];   % for CP
 % rho_try = [1e-1 1e-2];   % for ADMM
 
-lamb_try = 0.1;
+lamb_try = 0.005;
 rho_try = 0.1;
 tau_try = 0.1;
 

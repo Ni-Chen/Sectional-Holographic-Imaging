@@ -13,10 +13,10 @@ obj_name = 'fiber';  %'random', 'conhelix', 'circhelix', 'star'
 isGPU = 1;
 isNonNeg = 0;
 cost_type = 'LS';  % LS, KL
-reg_type = 'HS';   % TV:, HS:Hessian-Shatten
+reg_type = 'TV';   % TV:, HS:Hessian-Shatten
 solv_type = 'CP';  % CP, ADMM, CG, RL, FISTA, VMLMB
 
-maxit = 100;       % Max iterations
+maxit = 10;       % Max iterations
 
 % CP: choose lambad and tau
 % lamb_try = [0.5e-3 1e-3 5e-3];
@@ -127,4 +127,3 @@ if img_num > 0
     set(gcf,'paperpositionmode','auto');
     print('-dpng', ['./output/', obj_name, '_cost.png']);    
 end
-
