@@ -23,7 +23,8 @@ if img_num > 0
     end
         
     %% Show objective cost value
-    figure('units','normalized','outerposition',[0 0 1 1]); set(gca,'FontSize', 12);
+    figure('Name', 'Cost');
+%     figure('units','normalized','outerposition',[0 0 1 1]); set(gca,'FontSize', 12);
     grid;title('Cost evolution'); xlabel('Iterations');ylabel('Cost');
     for imidx = 1:img_num 
         lineStyle = randLineStyle();    
@@ -35,8 +36,9 @@ if img_num > 0
     print('-dpng',  [data_dir, out_name,'_cost.png']);
     
     %% Show SNR
-    if isSim        
-        figure('units','normalized','outerposition',[0 0 1 1]); set(gca,'FontSize', 12);
+    if isSim     
+        figure('Name', 'SNR');
+%         figure('units','normalized','outerposition',[0 0 1 1]); set(gca,'FontSize', 12);
         grid; hold all; title('Evolution SNR'); xlabel('Iterations');ylabel('SNR (dB)');
         for imidx = 1:img_num
             lineStyle = randLineStyle();
@@ -49,7 +51,8 @@ if img_num > 0
 
     
     %% show time cost
-    figure('units','normalized','outerposition',[0 0 1 1]); set(gca,'FontSize', 12);
+    figure('Name', 'Time');
+%     figure('units','normalized','outerposition',[0 0 1 1]); set(gca,'FontSize', 12);
     hold on; grid; title('Runing Time'); set(gca,'xtick',1:img_num); ylabel('Time (s)');
     orderCol = linspecer(img_num, 'qualitative');
     for imidx = 1:img_num   

@@ -37,7 +37,7 @@ is3D = 0;
 if ismember(case_type,[7, 8, 9])
     [im,psf,y] = setData('star','Poisson', 100, isCpx, is3D);
 else
-    [im,psf,y] = setData('star', 'Gaussian', 20, isCpx, is3D);
+    [im,psf,y] = setData('star', 'Gaussian', 40, isCpx, is3D);
 end
 
 
@@ -94,40 +94,25 @@ switch case_type
         lamb = 5e-3; rho_admm = 0.01; tau_pd = 100; sig_pd=1e-2; rho_pd=1.2; 
 end
 
-if ~isempty(reg_type)
-    file_name_head = [cost_type, '+', reg_type];
-else
-    file_name_head = [cost_type];
-end
-
-if isNonNeg
-    out_name = [file_name_head, '(NonNeg)'];
-else
-    out_name = file_name_head;
-end
+method_name_head = strcat(cost_type, ~isempty(reg_type)*strcat('+', reg_type));
+out_name = strcat(method_name_head, isNonNeg*('(NonNeg)'));
     
-
 for n = 1:length(solv_types)
     solv_type = solv_types{n};
 
-    if isNonNeg
-        file_name = [file_name_head, '(NonNeg)+', solv_type];
-    else
-        file_name = [file_name_head, '+', solv_type];
-    end    
+    method_name = strcat(method_name_head, isNonNeg*('(NonNeg)'), '+', solv_type); 
     
     %% --------------------------------------------- Cost ----------------------------------------------
     switch cost_type
         case 'LS'   % Least-Squares
             LS = CostL2([],y);
-            Fwd = LS*H;
+            F = LS*H;
             
         case 'KL'  % Kullback-Leibler divergence
             KL = CostKullLeib([],y,1e-6);     % Kullback-Leibler divergence data term
-            Fwd = KL*H;
+            F = KL*H;
     end
-    Fwd.doPrecomputation = 1;
-     %         C = LinOpCpx(sz);
+    F.doPrecomputation = 1;
     
     %% ----------------------------------------- regularizer -------------------------------------------
     switch reg_type
@@ -147,7 +132,7 @@ for n = 1:length(solv_types)
     %% ---------------------------------------- Optimization --------------------------------------------
     switch solv_type
         case 'CP'
-            optSolve = OptiChambPock(lamb*R_N12,G,Fwd);
+            optSolve = OptiChambPock(lamb*R_N12,G,F);
             optSolve.OutOp=OutputOptiSNR(1,im,20);
 
             optSolve.tau = tau_cp;  
@@ -160,7 +145,7 @@ for n = 1:length(solv_types)
                 optSolve.sig = sig_cp;  % sig x tau x ?H?2 <= 1, 1/(optSolve.tau*G.norm^2)*0.99
             end
             
-            file_name = [file_name, '(L', num2str(lamb), ',T', num2str(optSolve.tau) ,')'];
+            method_name = [method_name, '(L', num2str(lamb), ',T', num2str(optSolve.tau) ,')'];
             
         case 'ADMM'
             %% ----------------------------------- ADMM LS + TV ----------------------------------------
@@ -170,7 +155,7 @@ for n = 1:length(solv_types)
                 Hn = {G}; % Associated operators H_n
                 rho_n = [rho_admm]; % Multipliers rho_n, [1e-1];
 
-                optSolve = OptiADMM(Fwd,Fn,Hn,rho_n); % Declare optimizer
+                optSolve = OptiADMM(F,Fn,Hn,rho_n); % Declare optimizer
                 
             else
                 if  strcmp(cost_type, 'LS') % ADMM LS + TV + NonNeg
@@ -179,7 +164,7 @@ for n = 1:length(solv_types)
                     Hn = {G, LinOpIdentity(size(im))}; % Associated operators H_n
                     rho_n = [rho_admm, rho_admm]; % Multipliers rho_n
 
-                    optSolve = OptiADMM(Fwd,Fn,Hn,rho_n); % Declare optimizer
+                    optSolve = OptiADMM(F,Fn,Hn,rho_n); % Declare optimizer
                     
                 elseif strcmp(cost_type, 'KL') % ADMM KL + TV + NonNeg
                     disp('ADMM + KL + NonNeg');
@@ -192,20 +177,20 @@ for n = 1:length(solv_types)
             end
             optSolve.OutOp=OutputOptiSNR(1,im,round(maxit/10),[1 2]);
             
-            file_name = [file_name, '(L', num2str(lamb), ',R', num2str(rho_n(1)) ,')'];
+            method_name = [method_name, '(L', num2str(lamb), ',R', num2str(rho_n(1)) ,')'];
             
         case 'FISTA' % Forward-Backward Splitting optimization
             if strcmp(cost_type, 'LS')
                 disp('FISTA + LS');
-                optSolve= OptiFBS(Fwd,R_POS);
+                optSolve= OptiFBS(F,R_POS);
                 
             elseif strcmp(cost_type, 'KL')
                 disp('FISTA + KL');
-                optSolve = OptiFBS(Fwd,R_POS);
+                optSolve = OptiFBS(F,R_POS);
                 
                 optSolve.gam = gam_fista;     % descent step
                 optSolve.momRestart  = false; % true if the moment restart strategy is used
-                file_name = [file_name, '(G', num2str(optSolve.gam),')'];
+                method_name = [method_name, '(G', num2str(optSolve.gam),')'];
             end
             optSolve.OutOp=OutputOptiSNR(1,im,round(maxit/10));
             optSolve.fista = true;   % true if the accelerated version FISTA is used            
@@ -213,22 +198,22 @@ for n = 1:length(solv_types)
         case 'RL' % Richardson-Lucy algorithm
             if  strcmp(cost_type, 'LS') 
                 disp('RL + LS');
-                optSolve = OptiRichLucy(Fwd);
+                optSolve = OptiRichLucy(F);
             elseif  strcmp(cost_type, 'KL')    
                 if isempty(reg_type)
                     disp('RL + KL');
-                    optSolve = OptiRichLucy(Fwd);
+                    optSolve = OptiRichLucy(F);
                 else
                     disp('RL + KL +TV');
-                    optSolve = OptiRichLucy(Fwd,1,lamb);
-                    file_name = [file_name, '(L', num2str(lamb),')'];
+                    optSolve = OptiRichLucy(F,1,lamb);
+                    method_name = [method_name, '(L', num2str(lamb),')'];
                 end                
             end
             optSolve.OutOp=OutputOptiSNR(1,im,round(maxit/10));
             
         case 'DR' % Douglas-Rachford
             disp('DR + LS + NonNeg');
-            optSolve = OptiDouglasRachford(Fwd,R_POS,[],10,1.5);
+            optSolve = OptiDouglasRachford(F,R_POS,[],10,1.5);
             optSolve.OutOp=OutputOptiSNR(1,im,round(maxit/10));
             
         case 'PD' % PrimalDual Condat KL
@@ -239,13 +224,13 @@ for n = 1:length(solv_types)
                     disp('PD + LS + NonNeg');
                     Fn = {lamb*R_N12};
                     Hn = {G};
-                    optSolve = OptiPrimalDualCondat(Fwd,R_POS,Fn,Hn);
+                    optSolve = OptiPrimalDualCondat(F,R_POS,Fn,Hn);
                     optSolve.OutOp=OutputOptiSNR(1,im,round(maxit/5),[1 3]);
                     optSolve.CvOp=TestCvgCombine(TestCvgCostRelative(1e-8,[1 3]), 'StepRelative', 1e-8);
 
                     optSolve.tau = tau_pd;          % set algorithm parameters
                     if  strcmp(reg_type, 'TV')
-                        optSolve.sig = (1/optSolve.tau-Fwd.lip/2)/G.norm^2*0.9;   % sig x tau x ?H?2 <= 1, 1/(optSolve.tau*G.norm^2)*0.99
+                        optSolve.sig = (1/optSolve.tau-F.lip/2)/G.norm^2*0.9;   % sig x tau x ?H?2 <= 1, 1/(optSolve.tau*G.norm^2)*0.99
                     elseif strcmp(reg_type, 'HS')
                         optSolve.sig = sig_pd;  % sig x tau x ?H?2 <= 1, 1/(optSolve.tau*G.norm^2)*0.99
                     end
@@ -262,40 +247,40 @@ for n = 1:length(solv_types)
                     optSolve.rho = rho_pd;
                 end                
             end
-            file_name = [file_name, '(L', num2str(lamb), ',T', num2str(optSolve.tau) ,',S', num2str(optSolve.sig) ,',R', num2str(optSolve.rho) ,')'];
+            method_name = [method_name, '(L', num2str(lamb), ',T', num2str(optSolve.tau) ,',S', num2str(optSolve.sig) ,',R', num2str(optSolve.rho) ,')'];
              
         case 'VMLMB' % optSolve LS
             if ~isNonNeg  % VMLMB + NonNeg 
                disp('VMLMB');
                 H.memoizeOpts.applyHtH=true;
-                optSolve=OptiVMLMB(Fwd,[],[]);
+                optSolve=OptiVMLMB(F,[],[]);
 %                 optSolve.OutOp=OutputOptiSNR(1,im,10);
                 optSolve.m = 2;  % number of memorized step in hessian approximation (one step is enough for quadratic function)
             else
                 if strcmp(reg_type, 'TV') && strcmp(cost_type, 'LS') % VMLMB LS + TV NonNeg 
                     disp('VMLMB + KL + TV + NonNeg');
                     hyperB = CostHyperBolic(G.sizeout, 1e-7, 3)*G;
-                    C = Fwd + lamb*hyperB;
+                    C = F + lamb*hyperB;
                     C.memoizeOpts.apply=true;
                     optSolve=OptiVMLMB(C,0.,[]);
 %                     optSolve.OutOp=OutputOptiSNR(1,im,10);
                     optSolve.m=3;                                     % number of memorized step in hessian approximation
-                    file_name = [file_name, '(L', num2str(lamb),')'];
+                    method_name = [method_name, '(L', num2str(lamb),')'];
                     
                 elseif strcmp(reg_type, 'TV') && strcmp(cost_type, 'KL')  % VMLMB KL + TV NonNeg 
                     disp('VMLMB+ KL + TV + NonNeg');
                     H.memoizeOpts.applyHtH = true;
                     hyperB = CostHyperBolic(G.sizeout, 1e-7, 3)*G;
-                    C = Fwd + lamb*hyperB; 
+                    C = F + lamb*hyperB; 
                     C.memoizeOpts.apply=true;
                     
                     optSolve=OptiVMLMB(C,0.,[]);                   
                     optSolve.m=3;                                     % number of memorized step in hessian approximation
-                    file_name = [file_name, '(L', num2str(lamb),')'];
+                    method_name = [method_name, '(L', num2str(lamb),')'];
                 else % VMLMB LS +  NonNeg 
                     disp('VMLMB + LS + NonNeg');
                     H.memoizeOpts.applyHtH=true;
-                    optSolve=OptiVMLMB(Fwd,0.,[]);              
+                    optSolve=OptiVMLMB(F,0.,[]);              
                     optSolve.m=3;                                     % number of memorized step in hessian approximation
                 end                 
             end
@@ -310,7 +295,7 @@ for n = 1:length(solv_types)
             
         case 'GD'  %  Gradient Descent LS
             disp('GD');
-            optSolve = OptiGradDsct(Fwd);
+            optSolve = OptiGradDsct(F);
             optSolve.OutOp = OutputOptiSNR(1,im,round(maxit/10));  % for simulation 
             
     end
@@ -322,10 +307,10 @@ for n = 1:length(solv_types)
 %     optSolve.run(zeros(size(y)));             % run the algorithm
     optSolve.run(y);             % run the algorithm
     
-    save([data_dir, file_name, '.mat'], 'optSolve');
+    save([data_dir, method_name, '.mat'], 'optSolve');
     
-    temp = abs((optSolve.xopt)); if isGPU; temp = gather(temp); end; imwrite(uint8(255*mat2gray(temp)), [data_dir,file_name, '.png']);
-    imdisp(optSolve.xopt,file_name,1);
+    temp = abs((optSolve.xopt)); if isGPU; temp = gather(temp); end; imwrite(uint8(255*mat2gray(temp)), [data_dir,method_name, '.png']);
+    imdisp(optSolve.xopt,method_name,1);
     
     
     if isGPU; reset(gpuDevice(1)); end

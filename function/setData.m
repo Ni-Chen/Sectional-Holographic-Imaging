@@ -54,7 +54,7 @@ function [im,otf,y]= setData(obj_name, noise, level, isCpx, is3D)
                         im = circHelix(Nxy, Nz, 0.4, 6);
                         dz = 500e-6;
                     case 'star' % Star-like object (help StarLikeSample to see the details of parameters)
-                        im = StarLikeSample(3, Nxy, 6, 20, 3, 0.8);
+                        im = StarLikeSample(3, Nxy, 2, 20, 20, 0.7);
                         dz = 1000e-6;
                     otherwise  % experimetnal data
                 end
@@ -65,14 +65,12 @@ function [im,otf,y]= setData(obj_name, noise, level, isCpx, is3D)
                 im1=StarLikeSample(2,Nxy,4,20,3,0.8);   % Star-like object (help StarLikeSample to see the details of parameters)
                 im2=StarLikeSample(2,Nxy,2,20,3,0.6);   % Star-like object (help StarLikeSample to see the details of parameters)
 
-
-                im1=1-mat2gray(im1);
-                im2=1-mat2gray(im2);
+%                 im1=1-mat2gray(im1);
+%                 im2=1-mat2gray(im2);
 
                 offset=0.1*max(im1(:));
-                % im = im1.*exp(1i*1*pi*im2);   % Complex object field
-                % im = (im1 + offset).*exp(1i*1*pi*im2);   % Complex object field
-                im = exp(log(0.5)*(im1)).*exp(-1i*0.99*pi*(im2));   % Complex object field
+                im = (im1 + offset).*exp(1i*1*pi*im2);   % Complex object field
+%                 im = exp(log(0.5)*(im1 + offset)).*exp(-1i*0.99*pi*(im2));   % Complex object field
 
             end
             H = LinOpWavePropKernel(lambda, Nxy, Nxy, pps, z);
