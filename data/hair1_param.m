@@ -1,11 +1,11 @@
 %{
 ---------------------------------------------------------------------------
-    Name: Experiment of phase shift hologram.
+    Name: Shift hologram of a single slanted hair 
     
-    Author: 
-    Date: 2008  
+    Author: Peng Xia
+    Date: 2019 
     
-    Object: coin
+    Object: slanted hair
 ---------------------------------------------------------------------------
 %}
 holo_type = 'complex';  
@@ -26,5 +26,5 @@ tau_psi = 0.2;
 %% ========================================== Resize =================================================
 load('hair1.mat');
 
-[holo, pps] = holoResize(holo, pps, 128, 20);
+[holo, pps] = holoResize(holo, pps, 512, 5);
 [Ny, Nx] = size(holo);

@@ -2,16 +2,16 @@
 switch cost_type
     case 'LS'   % Least-Squares
         LS = CostL2([],y);
-        F = LS*H;
+        Fwd = LS*H;
         
-        F.doPrecomputation = 1;
+        Fwd.doPrecomputation = 1;
         C = LinOpCpx(sz);
         
     case 'KL'  % Kullback-Leibler divergence 
         KL = CostKullLeib([],y,1e-6);     % Kullback-Leibler divergence data term
-        F = KL*H;
+        Fwd = KL*H;
         
-        F.doPrecomputation = 1;
+        Fwd.doPrecomputation = 1;
         C = LinOpCpx(sz);
 end
 
@@ -22,72 +22,70 @@ switch reg_type
         R_N12 = CostMixNorm21(G.sizeout,4);   % Mixed Norm 2-1
 %         R_N12 = CostMixNorm21NonNeg(G.sizeout,4);   % Mixed Norm 2-1
         
-        R_POS = CostNonNeg(sz);           % Non-Negativity
-        Id = LinOpIdentity(sz);
     case '3DTV'  % 3D TV regularizer
         G = LinOpGrad(C.sizeout, [1,2,3]);    % TV regularizer: Operator gradient
         R_N12 = CostMixNorm21(G.sizeout,4);   % TV regularizer: Mixed norm 2-1, check
 %         R_N12 = CostMixNorm21NonNeg(G.sizeout,4);   % Mixed Norm 2-1
-        
-        R_POS = CostNonNeg(sz);           % Non-Negativity
-        Id = LinOpIdentity(sz);               % Identity Operator
-        
+
     case 'HS'  % Hessian-Shatten
         G = LinOpHess(C.sizeout, 'circular', [1,2]);                 % Hessian Operator
         R_N12 = CostMixNormSchatt1(G.sizeout,1); % Mixed Norm 1-Schatten (p = 1)
-        
-        R_POS = CostNonNeg(sz);           % Non-Negativity
-        Id = LinOpIdentity(sz);
 end
 
+R_POS = CostNonNeg(C.sizeout);           % Non-Negativity
+Id = LinOpIdentity(C.sizeout);
+
+% R_POS = CostNonNeg(sz);           % Non-Negativity
+% Id = LinOpIdentity(sz);
+        
 %% ---------------------------------------- Optimization --------------------------------------------
 switch solv_type   
     case 'CP'
-        % ------------------------------- Chambolle-Pock  LS + TV ---------------------------------
-%         lamb = 1e-3;  % circhelix: 1e-3       
-        optSolve = OptiChambPock(lamb*R_N12,G*C,F);
+        % ------------------------------- Chambolle-Pock  LS + TV --------------------------------- 
+        optSolve = OptiChambPock(lamb*R_N12,G*C,Fwd);
         optSolve.tau = OptPara;  % 1, algorithm parameters, 15
-        optSolve.sig = 1/(optSolve.tau*G.norm^2)*0.99;  % sig x tau x ?H?2 <= 1, 1/(optSolve.tau*G.norm^2)*0.99
-%         optSolve.gam = 1;  % 1 or 2
-%         optSolve.var = 1;  % 1: ; 2:
+%         optSolve.sig = 1/(optSolve.tau*G.norm^2)*0.99;  % sig x tau x ?H?2 <= 1
+        optSolve.sig = 0.02; 
         
     case 'ADMM'
-        %% ----------------------------------- ADMM LS + TV ----------------------------------------
-%         lamb = 1e-3; % Hyperparameter, lamb = 1e-2;
-        
+        %% ----------------------------------- ADMM LS + TV ----------------------------------------        
         if ~isNonNeg % ADMM LS + TV 
             Fn = {lamb*R_N12}; % Functionals F_n constituting the cost
             Hn = {G*C}; % Associated operators H_n
             rho_n = [OptPara]; % Multipliers rho_n, [1e-1];
-            optSolve = OptiADMM(F,Fn,Hn,rho_n); % Declare optimizer
-        else  % ADMM LS + TV + NonNeg  
+            
+        else  % ADMM LS + TV + NonNeg
+            %             Fn = {lamb*R_N12, R_POS}; % Functionals F_n constituting the cost
+            %             Hn = {G*C, Id*C}; % Associated operators H_n
+            %             rho_n = [OptPara, OptPara]; % Multipliers rho_n
             if  strcmp(cost_type, 'LS') % ADMM LS + TV + NonNeg
+                disp('ADMM + LS + NonNeg');
                 Fn = {lamb*R_N12, R_POS}; % Functionals F_n constituting the cost
-                Hn = {G*C, Id}; % Associated operators H_n
-                rho_n = [OptPara, OptPara]; % Multipliers rho_n
+                Hn = {G*C, Id*C}; % Associated operators H_n
+                rho_n = [rho_admm, rho_admm]; % Multipliers rho_n
                 
-                optSolve = OptiADMM(F,Fn,Hn,rho_n); % Declare optimizer
-            elseif strcmp(cost_type, 'KL') % ADMM LS + TV + NonNeg
+                optSolve = OptiADMM(Fwd,Fn,Hn,rho_n); % Declare optimizer
+                
+            elseif strcmp(cost_type, 'KL') % ADMM KL + TV + NonNeg
+                disp('ADMM + KL + NonNeg');
                 Fn={KL,lamb*R_N12,R_POS};
-                Hn={H,G*C,LinOpDiag(sz)};
-                rho_n=[OptPara,OptPara,OptPara];
+                Hn={H,G,LinOpDiag(sz)};
+                rho_n=[rho_admm,rho_admm,rho_admm];
                 
                 optSolve=OptiADMM([],Fn,Hn,rho_n);
-%                 optSolve.OutOp=OutputOptiSNR(1,im,round(maxit/10),[1 2]);
             end
-        end    
+        end
+        
+        optSolve = OptiADMM(Fwd,Fn,Hn,rho_n); % Declare optimizer
         
     case 'FISTA' % Forward-Backward Splitting optimization  
-%         lamb = 1e-3;  % circhelix: 1e-3
-        optSolve = OptiFBS(F,R_POS);
-%         optSolve = OptiFBS(F, lamb*R_N12);
+        optSolve = OptiFBS(Fwd,R_POS);
         optSolve.fista = true;   % true if the accelerated version FISTA is used
         optSolve.gam = 1;     % descent step
         optSolve.momRestart  = false; % true if the moment restart strategy is used
         
     case 'RL' % Richardson-Lucy algorithm
-%         lamb = 1e-2; % Hyperparameter for TV
-        optSolve = OptiRichLucy(F, 1, lamb);
+        optSolve = OptiRichLucy(Fwd, 1, lamb);
         optSolve.epsl = 1e-6; % smoothing parameter to make TV differentiable at 0 
         
     case 'PD' % PrimalDual Condat KL
@@ -99,28 +97,12 @@ switch solv_type
 %         else  % PD + LS + TV + NonNeg
             Fn = {lamb*R_N12};
             Hn = {G*C};
-            optSolve = OptiPrimalDualCondat(F,R_POS,Fn,Hn);
+            optSolve = OptiPrimalDualCondat(Fwd,R_POS,Fn,Hn);
 %         end
 %         optSolve.OutOp = OutputOptiSNR(1, im, round(maxit/10), [2 3]);
         optSolve.tau = 1;          % set algorithm parameters
-        optSolve.sig = (1/optSolve.tau-F.lip/2)/G.norm^2*0.9;    %
+        optSolve.sig = (1/optSolve.tau-Fwd.lip/2)/G.norm^2*0.9;    %
         optSolve.rho = OptPara;          %
-        
-    case 'VMLMB' % optSolve LS 
-        lamb = 1e-3;                  % Hyperparameter
-        if ~isNonNeg
-            hyperB = CostHyperBolic(G.sizeout, 1e-7, 3)*G*C;
-            C1 = F + lamb*hyperB; 
-            C1.memoizeOpts.apply=true;
-            optSolve = OptiVMLMB(C,0,[]);
-            optSolve.m = 3;  % number of memorized step in hessian approximation (one step is enough for quadratic function)
-        else
-            hyperB = CostHyperBolic(G.sizeout, 1e-7, 3)*G;
-            C1 = F + lamb*hyperB; 
-            C1.memoizeOpts.apply=true;
-            optSolve = OptiVMLMB(C1,0.,[]);  
-            optSolve.m = 3; 
-        end        
         
     case 'CG'  % ConjGrad LS 
         A = H;
@@ -135,9 +117,9 @@ end
 optSolve.maxiter = maxit;                             % max number of iterations
 % optSolve.OutOp = OutputOptiSNR(1,im,round(maxit/10));  % for simulation
 optSolve.OutOp = OutputOpti(1,round(maxit/10));
+% optSolve.OutOp = OutputOptiConjGrad(1,round(maxit/10));
 optSolve.ItUpOut = round(maxit/10);         % call OutputOpti update every ItUpOut iterations
 optSolve.CvOp = TestCvgCombine(TestCvgCostRelative(1e-8), 'StepRelative', 1e-8);
-% optSolve.OutOpti = OutputOpti(true,round(maxit/10),costIndex)
 optSolve.run(zeros(size(otf)));             % run the algorithm
 
 

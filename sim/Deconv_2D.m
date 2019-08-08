@@ -76,7 +76,6 @@ lamb = 2e-2;                  % Hyperparameter
 
 % -- Chambolle-Pock  LS + TV
 maxit=200;
-temp = G*C;
 CP = OptiChambPock(lamb*R_N12,G*C,F);
 CP.OutOp = OutputOptiSNR(1,im,round(maxit/10));
 CP.CvOp = TestCvgCombine(TestCvgCostRelative(1e-10), 'StepRelative', 1e-10);  

@@ -36,7 +36,8 @@ if img_num > 0
     figure; 
     grid;title('Cost evolution'); set(gca,'FontSize',12);xlabel('Iterations');ylabel('Cost');
     for imidx = 1:img_num 
-        plot(solve_result{imidx}.OutOp.iternum,solve_result{imidx}.OutOp.evolcost,'LineWidth',1.5);     
+        lineStyle = randLineStyle();    
+        plot(solve_result{imidx}.OutOp.iternum,solve_result{imidx}.OutOp.evolcost, lineStyle{1}, 'LineWidth',1.5);     
         hold all;
     end
     legend(legend_name); 

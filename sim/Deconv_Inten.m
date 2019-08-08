@@ -16,7 +16,7 @@ maxit = 200;       % Max iterations
 %% fix the random seed (for reproductibility)
 rng(1);
 useGPU(isGPU);
-case_type = 9;
+case_type = 1;
 
 if ismember(case_type,[7, 8, 9])
     [im,psf,y] = GenerateData('Poisson',100);
@@ -295,7 +295,7 @@ for n = 1:length(solv_types)
         case 'GD'  %  Gradient Descent LS
             disp('GD');
             optSolve = OptiGradDsct(Fwd);
-%             optSolve.OutOp = OutputOptiSNR(1,im,round(maxit/10));  % for simulation 
+            optSolve.OutOp = OutputOptiSNR(1,im,round(maxit/10));  % for simulation 
             
     end
     

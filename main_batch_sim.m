@@ -9,12 +9,12 @@ close all; clear; clc;
 addpath(genpath('./function/'));
 
 %------------------------ Parameters --------------------------------------------
-obj_name = 'circhelix';  %'random', 'conhelix', 'circhelix', 'star'
+obj_name = 'star';  %'random', 'conhelix', 'circhelix', 'star'
 
 isGPU = 0;
 isNonNeg = 0;
 cost_type = 'LS';  % LS, KL
-reg_type = '3DTV';   % TV:, HS:Hessian-Shatten
+reg_type = 'TV';   % TV:, HS:Hessian-Shatten
 solv_type = 'CP';  % CP, ADMM, CG, RL, FISTA, VMLMB
 
 maxit = 500;       % Max iterations

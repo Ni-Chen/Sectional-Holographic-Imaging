@@ -52,14 +52,14 @@ elseif strcmp(noise,'Poisson')
     factor = level./mean((y_noNoise(:))) ;
     y_noNoise = (y_noNoise).* factor;
     
-%     factor = level./mean(real(y_noNoise(:))) ;
-%     y_noNoise_re = real(y_noNoise).* factor;
-%     
-%     factor = level./mean(imag(y_noNoise(:))) ;
-%     y_noNoise_im = imag(y_noNoise).* factor;
+    factor = level./mean(real(y_noNoise(:))) ;
+    y_noNoise_re = real(y_noNoise).* factor;
+    
+    factor = level./mean(imag(y_noNoise(:))) ;
+    y_noNoise_im = imag(y_noNoise).* factor;
     
     im = im.*factor;
-    y = random('Poisson', real(y_noNoise)) + 1i*random('Poisson', imag(y_noNoise));
+    y = random('Poisson', real(y_noNoise)) + 1i*random('Poisson', real(y_noNoise_im);
     
 %     y = random('Poisson', y_noNoise_re) + 1i*imag(y_noNoise);
     

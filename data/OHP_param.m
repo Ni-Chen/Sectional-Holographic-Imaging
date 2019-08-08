@@ -1,8 +1,8 @@
 %{
 ---------------------------------------------------------------------------
-    Name: Experiment of off-axis transmittant digital holography.
+    Name:  off-axis transmittant digital hologram of OHP
     
-    Author: Xia 
+    Author: Peng Xia 
     Date: Nov. 2018    
     
     Object: 

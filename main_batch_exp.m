@@ -1,18 +1,12 @@
-%--------------------------------------------------------------
-% This script performs 3D deconvolution using CP with
-%    - Data-term: Least-Squares or Kullback-Leibler
-%    - regul: TV or Hessian-Schatten norm
-%--------------------------------------------------------------
-
 close all; clear; clc;
 addpath(genpath('./function/'));
 
 %% ------------------------ Parameters --------------------------------------------
-obj_name = 'fiber';  %'random', 'conhelix', 'circhelix', 'star'
+obj_name = 'hair';  %'random', 'conhelix', 'circhelix', 'star'
 
 isGPU = 1;
 isNonNeg = 1;
-cost_type = 'KL';  % LS, KL
+cost_type = 'LS';  % LS, KL
 reg_type = 'TV';   % TV:, HS:Hessian-Shatten
 solv_type = 'ADMM';  % CP, ADMM, CG, RL, FISTA, VMLMB
 
@@ -20,12 +14,12 @@ maxit = 100;       % Max iterations
 
 % CP: choose lambad and tau
 % lamb_try = [0.5e-3 1e-3 5e-3];
-% tau_try = [0.5 1 1.5];   % for CP
-% rho_try = [1e-1 1e-2];   % for ADMM
+% tau_cp = [0.5 1 1.5];   % for CP
+% rho_admm = [1e-1 1e-2];   % for ADMM
 
-lamb_try = 0.005;
-rho_try = 0.1;
-tau_try = 0.1;
+lamb_try = 0.1;
+rho_admm = 0.05;
+tau_cp = 0.1;
 
 %% fix the random seed (for reproductibility)
 rng(1);
@@ -36,11 +30,11 @@ useGPU(isGPU);
 
 n = 0;
 if strcmp(solv_type, 'CP')
-    OptPara_try = tau_try;
+    OptPara_try = tau_cp;
 elseif strcmp(solv_type, 'ADMM')
-    OptPara_try = rho_try;
+    OptPara_try = rho_admm;
 else
-    OptPara_try = tau_try;
+    OptPara_try = tau_cp;
 end
 
 for ilamb = 1:length(lamb_try)
@@ -78,14 +72,15 @@ for ilamb = 1:length(lamb_try)
     end
 end
 
-% % Back-propagation reconstruction
-% im_bp = LinOpAdjoint(H)*y;
-% temp = abs(im_bp);  %temp = abs(gather(optSolve.xopt));
-% if isGPU
-%     temp = gather(temp);
-% end
-% figure('Name', 'BP'); imagesc(plotdatacube(temp));  axis image; drawnow; colormap(hot);  axis off;
+% Back-propagation reconstruction
+im_bp = LinOpAdjoint(H)*y;
+temp = abs(im_bp);  %temp = abs(gather(optSolve.xopt));
+if isGPU
+    temp = gather(temp);
+end
+figure('Name', 'BP'); imagesc(plotdatacube(temp));  axis image; drawnow; colormap(hot);  axis off; 
 % print('-dpng', ['./output/', obj_name,'_BP.png']);
+export_fig(['./output/', obj_name,'_BP.png'],'-transparent');
 
 temp = abs((optSolve.xopt));  %temp = abs(gather(optSolve.xopt));
 if isGPU
