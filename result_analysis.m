@@ -6,7 +6,8 @@ isGPU = 1;
 
 useGPU(isGPU);
 
-data_dir = './output/mat/';
+data_dir = './output/sim/real/';   % for simulation
+
 out_name = 'KL';   % LS, KL
 
 

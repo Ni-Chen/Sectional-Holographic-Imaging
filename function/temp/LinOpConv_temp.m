@@ -237,9 +237,9 @@ classdef LinOpConv <  LinOp
                 y = iSrft( conj(this.mtf) .* Srft(x, this.Notindex), this.Notindex );
             else
                 y = iSfft( conj(this.mtf) .* Sfft(x, this.Notindex), this.Notindex );
-                if (this.isReal)&&isreal(x)
+%                 if (this.isReal)&&isreal(x)   % for 3D hologram reconstruction
                     y = real(y);
-                end
+%                 end
             end
         end
         function y = applyHtH_(this,x)

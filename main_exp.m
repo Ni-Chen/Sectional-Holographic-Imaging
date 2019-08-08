@@ -1,11 +1,13 @@
 close all; clear; clc;
 addpath(genpath('./function/'));
 
+global isSim;
+
 %% ------------------------ Parameters --------------------------------------------
 obj_name = 'hair';  %'random', 'conhelix', 'circhelix', 'star'
 
 isGPU = 1;
-isNonNeg = 1;
+isNonNeg = 0;
 cost_type = 'LS';  % LS, KL
 reg_type = 'TV';   % TV:, HS:Hessian-Shatten
 solv_type = 'ADMM';  % CP, ADMM, CG, RL, FISTA, VMLMB
@@ -26,7 +28,7 @@ rng(1);
 useGPU(isGPU);
 
 %% -------------------------------------- Image loading -----------------------------------------
-[im_ori, otf_ori, y_ori] = setHoloData(obj_name, 'Gaussian', 50);
+[im_ori, otf_ori, y_ori] = setData(obj_name, 'Gaussian', 0, 1, 1);
 
 n = 0;
 if strcmp(solv_type, 'CP')
@@ -94,32 +96,36 @@ if isGPU; reset(gpuDevice(1)); end
 % solve_lst = dir(['./output/', obj_name, '*', reg_type, '*', solv_type, '*.mat']);
 % solve_lst = dir(['./output/', obj_name, '*', solv_type, '*.mat']);
 
-solve_lst = dir(['./output/', obj_name, '*.mat']);
-img_num = length(solve_lst);
-if img_num > 0    
-    legend_name = {};
-    method_name = {};
-    
-    for imidx = 1:img_num 
-        solve_name = solve_lst(imidx).name;
-        load(['./output/', solve_name]);
-        solve_result{imidx} = optSolve;
-        
-        temp = strrep(solve_name, [obj_name, '_'], '');
-        method_name{imidx} = strrep(temp, '.mat', '');        
-        legend_name = [legend_name, method_name{imidx}];        
-    end
-          
-    figure('Name', 'Cost evolution'); 
-    grid;title('Cost evolution'); set(gca,'FontSize',12);xlabel('Iterations');ylabel('Cost');
-    for imidx = 1:img_num 
-        lineStyle = randLineStyle(); 
-        plot(solve_result{imidx}.OutOp.iternum,solve_result{imidx}.OutOp.evolcost, lineStyle{1}, 'LineWidth', 1.5);     
-        hold all;
-    end
-    
-    legend(legend_name); 
-    set(gcf,'paperpositionmode','auto');
-    print('-dpng', ['./output/', obj_name, '_cost.png']);    
-end
+data_dir = './output/';
+out_name = obj_name;
+solve_lst = dir([data_dir, obj_name, '*.mat']);
+run('PlotMult.m');
+
+% img_num = length(solve_lst);
+% if img_num > 0    
+%     legend_name = {};
+%     method_name = {};
+%     
+%     for imidx = 1:img_num 
+%         solve_name = solve_lst(imidx).name;
+%         load(['./output/', solve_name]);
+%         solve_result{imidx} = optSolve;
+%         
+%         temp = strrep(solve_name, [obj_name, '_'], '');
+%         method_name{imidx} = strrep(temp, '.mat', '');        
+%         legend_name = [legend_name, method_name{imidx}];        
+%     end
+%           
+%     figure('Name', 'Cost evolution'); 
+%     grid;title('Cost evolution'); set(gca,'FontSize',12);xlabel('Iterations');ylabel('Cost');
+%     for imidx = 1:img_num 
+%         lineStyle = randLineStyle(); 
+%         plot(solve_result{imidx}.OutOp.iternum,solve_result{imidx}.OutOp.evolcost, lineStyle{1}, 'LineWidth', 1.5);     
+%         hold all;
+%     end
+%     
+%     legend(legend_name); 
+%     set(gcf,'paperpositionmode','auto');
+%     print('-dpng', ['./output/', obj_name, '_cost.png']);    
+% end
 

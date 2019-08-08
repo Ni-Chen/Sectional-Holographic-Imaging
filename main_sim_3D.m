@@ -1,11 +1,17 @@
-%--------------------------------------------------------------
-% This script performs 3D deconvolution using CP with
-%    - Data-term: Least-Squares or Kullback-Leibler
-%    - regul: TV or Hessian-Schatten norm
-%--------------------------------------------------------------
+%{
+----------------------------------------------------------------------------------------------------
+Name: 3D Complex deconvolution with GlobalBioIm
+
+Author:   Ni Chen (chenni@snu.ac.kr)
+Date:
+Modified:
+
+Reference:
+- https://biomedical-imaging-group.github.io/GlobalBioIm/
+----------------------------------------------------------------------------------------------------
+%}
 
 close all; clear; clc;
-
 addpath(genpath('./function/'));
 
 %------------------------ Parameters --------------------------------------------
@@ -17,7 +23,7 @@ cost_type = 'LS';  % LS, KL
 reg_type = 'TV';   % TV:, HS:Hessian-Shatten
 solv_type = 'CP';  % CP, ADMM, CG, RL, FISTA, VMLMB
 
-maxit = 500;       % Max iterations
+maxit = 100;       % Max iterations
 % CP: choose lambad and tau
 lamb_try = [0.5e-3 1e-3 5e-3];
 tau_try = [0.5 1 1.5];   % for CP
@@ -43,7 +49,9 @@ rng(1);
 useGPU(isGPU);
 
 %% -------------------------------------- Image generation -----------------------------------------
-[im_ori, otf_ori, y_ori] = setHoloData(obj_name, 'Gaussian', 50);
+isCpx = 1;
+is3D = 1;
+[im_ori, otf_ori, y_ori] = setData(obj_name, 'Gaussian', 50, isCpx, is3D);
 
 n = 0;
 if strcmp(solv_type, 'CP')
@@ -87,6 +95,9 @@ end
 if isGPU; reset(gpuDevice(1)); end
 % solve_lst = dir(['./output/', obj_name, '*', reg_type, '*', solv_type, '*.mat']);
 % solve_lst = dir(['./output/', obj_name, '*', solv_type, '*.mat']);
-solve_lst = dir(['./output/', obj_name, '*.mat']);
-run('dispPlotCmp.m');
+
+data_dir = './output/sim/';
+out_name = obj_name;
+solve_lst = dir([data_dir, obj_name, '*.mat']);
+run('PlotMult.m');
 
