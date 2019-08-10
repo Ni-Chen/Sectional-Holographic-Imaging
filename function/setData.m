@@ -82,10 +82,10 @@ function [im,otf,y]= setData(obj_name, noise, level, isCpx, is3D)
             % real data
             if is3D
                 sz=[Nxy Nxy Nxy];
-                im=StarLikeSample(3,Nxy,6,20,3,0.7);   % Star-like object (help StarLikeSample to see the details of parameters)
+                im=StarLikeSample(3,Nxy,4,20,5,0.9);   % Star-like object (help StarLikeSample to see the details of parameters)
             else
                 sz=[Nxy Nxy];                       % Image size
-                im=StarLikeSample(2,Nxy,6,20,3,0.7);   % Star-like object (help StarLikeSample to see the details of parameters)
+                im=StarLikeSample(2,Nxy,4,20,5,0.9);   % Star-like object (help StarLikeSample to see the details of parameters)
             end
 
             %% PSF

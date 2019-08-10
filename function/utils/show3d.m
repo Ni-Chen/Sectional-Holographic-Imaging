@@ -18,6 +18,7 @@ function show3d(obj_vol, alpham)
     
     axis([0 Nx 0 Ny 0 Nz]);
     axis tight;
+    axis equal;
    
     box on,
     ax = gca;

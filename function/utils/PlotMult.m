@@ -19,7 +19,11 @@ if img_num > 0
         
         method_name{imidx} = strrep(solve_name, '.mat',  '');
         
-        legend_name = [legend_name, method_name{imidx}];        
+        legend_name = [legend_name, method_name{imidx}];     
+        
+%         if existsOnGPU(optSolve.xopt); temp = gather(optSolve.xopt); else temp = optSolve.xopt; end
+%         temp = abs(temp); temp = (temp-min(temp(:)))./(max(temp(:))-min(temp(:)));
+%         figure('Name', 'Deconv'); show3d(abs(temp), 0.01); axis normal; set(gcf,'Position',[0,0,500,500]); saveas(gca, [data_dir,  solve_name, '.png'], 'png');
     end
         
     %% Show objective cost value
@@ -35,18 +39,32 @@ if img_num > 0
     set(gcf,'paperpositionmode', 'auto');
     print('-dpng',  [data_dir, out_name,'_cost.png']);
     
-    %% Show SNR
+%     %% Show SNR
+%     if isSim     
+%         figure('Name', 'SNR');
+% %         figure('units','normalized','outerposition',[0 0 1 1]); set(gca,'FontSize', 12);
+%         grid; hold all; title('Evolution SNR'); xlabel('Iterations');ylabel('SNR (dB)');
+%         for imidx = 1:img_num
+%             lineStyle = randLineStyle();
+%             semilogy(solve_result{imidx}.OutOp.iternum,solve_result{imidx}.OutOp.evolsnr, lineStyle{1}, 'LineWidth', 1.5);
+%         end
+%         legend(legend_name,'Location', 'southeast');
+%         set(gcf, 'paperpositionmode', 'auto');
+%         print('-dpng', [data_dir, out_name, '_snr.png']);
+%     end
+    
+     %% Show MSE
     if isSim     
-        figure('Name', 'SNR');
+        figure('Name', 'MSE');
 %         figure('units','normalized','outerposition',[0 0 1 1]); set(gca,'FontSize', 12);
-        grid; hold all; title('Evolution SNR'); xlabel('Iterations');ylabel('SNR (dB)');
+        grid; hold all; title('Evolution MSE'); xlabel('Iterations');ylabel('MSE');
         for imidx = 1:img_num
             lineStyle = randLineStyle();
-            semilogy(solve_result{imidx}.OutOp.iternum,solve_result{imidx}.OutOp.evolsnr, lineStyle{1}, 'LineWidth', 1.5);
+            semilogy(solve_result{imidx}.OutOp.iternum,(solve_result{imidx}.OutOp.evolmse).^2, lineStyle{1}, 'LineWidth', 1.5);
         end
-        legend(legend_name,'Location', 'southeast');
+        legend(legend_name,'Location', 'northeast');
         set(gcf, 'paperpositionmode', 'auto');
-        print('-dpng', [data_dir, out_name, '_snr.png']);
+        print('-dpng', [data_dir, out_name, '_mse.png']);
     end
 
     

@@ -20,6 +20,12 @@ switch reg_type
         
         G_Cpx = G*Cpx;
         
+    case '3DTV'  % TV regularizer
+        G = LinOpGrad(Cpx.sizeout, [1,2,3]);    % TV regularizer: Operator gradient
+        R_N12 = CostMixNorm21(G.sizeout,4);   % TV regularizer: Mixed norm 2-1, check
+        
+        G_Cpx = G*Cpx;
+        
     case 'HS'  % Hessian-Shatten
         %             G = LinOpHess(sz);                 % Hessian Operator
         G = LinOpHess(Cpx.sizeout);                 % Hessian Operator
@@ -55,7 +61,7 @@ switch solv_type
     case 'ADMM'
         %% ----------------------------------- ADMM LS + TV ----------------------------------------
         if ~isNonNeg % ADMM LS + TV/HS
-            if  strcmp(reg_type, 'TV')
+            if any(strcmp(reg_type, {'TV', '3DTV'}))  %strcmp(reg_type, 'TV')
                 disp('ADMM + LS + TV');
                 Fn = {lamb*R_N12}; % Functionals F_n constituting the cost
                 Hn = {G_Cpx}; % Associated operators H_n
@@ -88,7 +94,11 @@ switch solv_type
                 optSolve=OptiADMM([], Fn, Hn, rho_n);
             end
         end
-        optSolve.OutOp=OutputOptiSNR(1, im, round(maxit/10), [1 2]);
+%         optSolve.OutOp=OutputOptiSNR(1, im, round(maxit/10), [1 2]);
+        optSolve.OutOp=OutputOptiMSE(1, im, round(maxit/10), [1 2]);
+        % STOP when the sum successives C = F*x + Fn{1}*Hn{1}*x is lower than 1e-4 or when the distance between two successive step is lower than 1e-5
+%          optSolve.CvOp=TestCvgCombine(TestCvgCostRelative(1e-4, [1 2]), 'StepRelative', 1e-4); 
+        optSolve.CvOp = TestCvgMaxSnr(im);
         
         method_name = [method_name, '(L', num2str(lamb), ',R', num2str(rho_n(1)) ,')'];
         

@@ -13,13 +13,13 @@ Reference:
 
 
 close all; clear; clc;
-addpath(genpath('../function/'));
+addpath(genpath('./function/'));
 
 global isSim;
 
-data_dir = './output/sim';
+data_dir = './output/sim/real';
 if any(size(dir([data_dir, '*.mat']),1))
-    movefile([data_dir, '*.mat'], [data_dir, 'real/'])
+%     movefile([data_dir, '*.mat'], [data_dir, 'real/'])
     % delete([data_dir, '*.mat']);
 end
 
@@ -30,14 +30,14 @@ maxit = 200;       % Max iterations
 %% fix the random seed (for reproductibility)
 rng(1);
 useGPU(isGPU);
-case_type = 1;
+case_type = 9;
 isCpx = 0;
 is3D = 0;
 
 if ismember(case_type,[7, 8, 9])
     [im,psf,y] = setData('star','Poisson', 100, isCpx, is3D);
 else
-    [im,psf,y] = setData('star', 'Gaussian', 40, isCpx, is3D);
+    [im,psf,y] = setData('star', 'Gaussian', 35, isCpx, is3D);
 end
 
 
@@ -133,7 +133,7 @@ for n = 1:length(solv_types)
     switch solv_type
         case 'CP'
             optSolve = OptiChambPock(lamb*R_N12,G,F);
-            optSolve.OutOp=OutputOptiSNR(1,im,20);
+            optSolve.OutOp=OutputOpti(1,im,20);
 
             optSolve.tau = tau_cp;  
             
@@ -175,7 +175,7 @@ for n = 1:length(solv_types)
                     optSolve=OptiADMM([],Fn,Hn,rho_n);
                 end
             end
-            optSolve.OutOp=OutputOptiSNR(1,im,round(maxit/10),[1 2]);
+            optSolve.OutOp=OutputOpti(1,im,round(maxit/10),[1 2]);
             
             method_name = [method_name, '(L', num2str(lamb), ',R', num2str(rho_n(1)) ,')'];
             
@@ -192,7 +192,7 @@ for n = 1:length(solv_types)
                 optSolve.momRestart  = false; % true if the moment restart strategy is used
                 method_name = [method_name, '(G', num2str(optSolve.gam),')'];
             end
-            optSolve.OutOp=OutputOptiSNR(1,im,round(maxit/10));
+            optSolve.OutOp=OutputOpti(1,im,round(maxit/10));
             optSolve.fista = true;   % true if the accelerated version FISTA is used            
             
         case 'RL' % Richardson-Lucy algorithm
@@ -209,12 +209,12 @@ for n = 1:length(solv_types)
                     method_name = [method_name, '(L', num2str(lamb),')'];
                 end                
             end
-            optSolve.OutOp=OutputOptiSNR(1,im,round(maxit/10));
+            optSolve.OutOp=OutputOpti(1,im,round(maxit/10));
             
         case 'DR' % Douglas-Rachford
             disp('DR + LS + NonNeg');
             optSolve = OptiDouglasRachford(F,R_POS,[],10,1.5);
-            optSolve.OutOp=OutputOptiSNR(1,im,round(maxit/10));
+            optSolve.OutOp=OutputOpti(1,im,round(maxit/10));
             
         case 'PD' % PrimalDual Condat KL
             if ~isNonNeg
@@ -225,7 +225,7 @@ for n = 1:length(solv_types)
                     Fn = {lamb*R_N12};
                     Hn = {G};
                     optSolve = OptiPrimalDualCondat(F,R_POS,Fn,Hn);
-                    optSolve.OutOp=OutputOptiSNR(1,im,round(maxit/5),[1 3]);
+                    optSolve.OutOp=OutputOpti(1,im,round(maxit/5),[1 3]);
                     optSolve.CvOp=TestCvgCombine(TestCvgCostRelative(1e-8,[1 3]), 'StepRelative', 1e-8);
 
                     optSolve.tau = tau_pd;          % set algorithm parameters
@@ -241,7 +241,7 @@ for n = 1:length(solv_types)
                     Fn = {lamb*R_N12, KL};
                     Hn = {G,H};
                     optSolve = OptiPrimalDualCondat([],R_POS,Fn,Hn);
-                    optSolve.OutOp=OutputOptiSNR(1,im,round(maxit/5),[2 3]);
+                    optSolve.OutOp=OutputOpti(1,im,round(maxit/5),[2 3]);
                     optSolve.tau = tau_pd;          % set algorithm parameters
                     optSolve.sig = sig_pd;    %
                     optSolve.rho = rho_pd;
@@ -254,7 +254,7 @@ for n = 1:length(solv_types)
                disp('VMLMB');
                 H.memoizeOpts.applyHtH=true;
                 optSolve=OptiVMLMB(F,[],[]);
-%                 optSolve.OutOp=OutputOptiSNR(1,im,10);
+%                 optSolve.OutOp=OutputOpti(1,im,10);
                 optSolve.m = 2;  % number of memorized step in hessian approximation (one step is enough for quadratic function)
             else
                 if strcmp(reg_type, 'TV') && strcmp(cost_type, 'LS') % VMLMB LS + TV NonNeg 
@@ -263,7 +263,7 @@ for n = 1:length(solv_types)
                     C = F + lamb*hyperB;
                     C.memoizeOpts.apply=true;
                     optSolve=OptiVMLMB(C,0.,[]);
-%                     optSolve.OutOp=OutputOptiSNR(1,im,10);
+%                     optSolve.OutOp=OutputOpti(1,im,10);
                     optSolve.m=3;                                     % number of memorized step in hessian approximation
                     method_name = [method_name, '(L', num2str(lamb),')'];
                     
@@ -284,7 +284,7 @@ for n = 1:length(solv_types)
                     optSolve.m=3;                                     % number of memorized step in hessian approximation
                 end                 
             end
-            optSolve.OutOp=OutputOptiSNR(1,im,10);   
+            optSolve.OutOp=OutputOpti(1,im,10);   
             
         case 'CG'  % ConjGrad LS
             disp('CG');
@@ -296,12 +296,12 @@ for n = 1:length(solv_types)
         case 'GD'  %  Gradient Descent LS
             disp('GD');
             optSolve = OptiGradDsct(F);
-            optSolve.OutOp = OutputOptiSNR(1,im,round(maxit/10));  % for simulation 
+            optSolve.OutOp = OutputOpti(1,im,round(maxit/10));  % for simulation 
             
     end
     
     optSolve.maxiter = maxit;                             % max number of iterations
-%     optSolve.OutOp = OutputOptiSNR(1,im,round(maxit/10));  % for simulation
+%     optSolve.OutOp = OutputOpti(1,im,round(maxit/10));  % for simulation
     optSolve.ItUpOut = 10;         % call OutputOpti update every ItUpOut iterations
 %     optSolve.CvOp = TestCvgCombine(TestCvgCostRelative(1e-10), 'StepRelative', 1e-10);
 %     optSolve.run(zeros(size(y)));             % run the algorithm
@@ -313,7 +313,9 @@ for n = 1:length(solv_types)
     imdisp(optSolve.xopt,method_name,1);
     
     
-    if isGPU; reset(gpuDevice(1)); end
-    solve_lst = dir([data_dir,  '*.mat']);  run('PlotMult.m');
+
     
 end
+
+if isGPU; reset(gpuDevice(1)); end
+solve_lst = dir([data_dir, method_name, '*.mat']);  run('PlotMult.m');

@@ -12,23 +12,25 @@ Reference:
 %}
 
 close all; clear; clc;
-addpath(genpath('../function/'));
+addpath(genpath('./function/'));
 
 %% --------------------------------------- Initilization -------------------------------------------
 global isSim;
-isGPU = 0;
+isGPU = 1;
 maxit = 100;       % Max iterations
 case_type = 3;  %
 isCpx = 1;
-is3D = 0;
+is3D = 1;
+is3DTV = 1;
 
-obj_name = 'star';
-data_dir = './output/sim/';
+
+obj_name = 'circhelix';
+data_dir = './output/';
 
 if any(size(dir([data_dir, '*.mat']),1))
 %     movefile([data_dir, '*.mat'], [data_dir, 'Cpx/'])
-    delete([data_dir, '*.png']);
-    delete([data_dir, '*.mat']);
+%     delete([data_dir, '*.png']);
+%     delete([data_dir, '*.mat']);
 end
 
 %% -------------------------------------------------------------------------------------------------
@@ -39,7 +41,7 @@ useGPU(isGPU);
 if ismember(case_type,[7, 8, 9])
     [im_ori,otf_ori,y_ori] = setData(obj_name, 'Poisson', 100, isCpx, is3D);
 else
-    [im_ori,otf_ori,y_ori] = setData(obj_name, 'Gaussian', 35, isCpx, is3D);
+    [im_ori,otf_ori,y_ori] = setData(obj_name, 'Gaussian', 50, isCpx, is3D);
 end
 
 obj_name = strcat(obj_name, ~is3D*('2d'));
@@ -48,7 +50,8 @@ if ~is3D
     imwrite(uint8(255*mat2gray(abs(im_ori))), [data_dir,  obj_name,'_ori_abs.png']);
     imwrite(uint8(255*mat2gray(angle(im_ori))), [data_dir, obj_name, '_ori_phase.png']);
 else
-    figure('Name', 'Original'); show3d(im_ori, 0.01); axis normal; set(gcf,'Position',[0,0,500,500]); saveas(gca, [data_dir, obj_name, '_ori.png'], 'png');
+    figure('Name', 'Original'); show3d(im_ori, 0.01); axis normal; set(gcf,'Position',[0,0,500,500]); 
+    saveas(gca, [data_dir, obj_name, '_ori.png'], 'png');
 end
 
 imwrite(uint8(255*mat2gray(abs(y_ori))), [data_dir, obj_name, '_holo_abs.png']);
@@ -79,7 +82,8 @@ else
     
     im_bp = LinOpAdjoint(H)*y;
     if isGPU; temp = gather(im_bp); else  temp = im_bp;  end
-    figure('Name', 'BP'); show3d(abs(temp), 0.01); axis normal; set(gcf,'Position',[0,0,500,500]); saveas(gca, [data_dir, obj_name, '_BP.png'], 'png');
+    figure('Name', 'BP'); show3d(abs(temp), 0.01); axis normal; set(gcf,'Position',[0,0,500,500]); 
+    saveas(gca, [data_dir, obj_name, '_BP.png'], 'png');
 end
 
 switch case_type
@@ -94,14 +98,15 @@ switch case_type
         
     case 3 % gold
         % LS + TV:          0.5 ||Hx - y||^2  + lamb*TV(x)
-        isNonNeg = 0; cost_type = 'LS';  reg_type = 'TV';  solv_types = {'ADMM', 'CP'};
+        isNonNeg = 0; cost_type = 'LS';  reg_type = strcat(is3DTV*('3D'), 'TV');  solv_types = {'ADMM'};  % 'CP'
         lamb = 1.5e-2; rho_admm = 0.1; tau_cp = 1;   tau_sig = 0.02;  % for 2D
-%         lamb = 0.5e-3; rho_admm = 1e-1; tau_cp = 1;   % tau_sig = 0.02;  for 3D
+        lamb = 5e-3; rho_admm = 0.1; tau_cp = 1;   % tau_sig = 0.02;  for 3D
         
     case 4 %
         % LS + TV + NonNeg: 0.5 ||Hx - y||^2  + i_{>0}(x) + lamb*TV(x)
-        isNonNeg = 1; cost_type = 'LS';  reg_type = 'TV';  solv_types = {'ADMM'}; %'VMLMB', PD
-        lamb = 10e-3; rho_admm = 0.01; tau_pd = 0.1;  rho_pd = 1.1;
+        isNonNeg = 1; cost_type = 'LS';  reg_type = strcat(is3DTV*('3D'), 'TV');  solv_types = {'ADMM'}; %'VMLMB', PD
+%         lamb = 0.5e-3; rho_admm = 0.1; tau_pd = 0.1;  rho_pd = 1.1;
+        lamb = 5e-3; rho_admm = 0.1; tau_pd = 0.1;  rho_pd = 1.1;
         
     case 5
         % LS + HS:          0.5 ||Hx - y||^2  + lamb*||Hess*x||_{1,S_p}
@@ -120,7 +125,7 @@ switch case_type
         
     case 8
         % KL + TV + NonNeg: \sum_n -y_n log((H*x)_n + bet) + (H*x)_n + i_{>0}(x) + Tv(x)
-        isNonNeg = 1; cost_type = 'KL';  reg_type = 'TV';  solv_types ={'PD', 'ADMM', 'RL'} ; %{'PD', 'ADMM', 'RL', 'VMLMB'};
+        isNonNeg = 1; cost_type = 'KL';  reg_type = strcat(is3DTV*('3D'), 'TV');  solv_types ={'PD', 'ADMM', 'RL'} ; %{'PD', 'ADMM', 'RL', 'VMLMB'};
         lamb = 1e-2; rho_admm = 1e-2; tau_pd = 100; sig_pd=1e-2;  rho_pd=1.2;
         
     case 9
@@ -129,27 +134,36 @@ switch case_type
         lamb = 5e-3; rho_admm = 0.01; tau_pd = 100; sig_pd=1e-2; rho_pd=1.2;
 end
 
-method_name_head = strcat(obj_name, '_', cost_type, ~isempty(reg_type)*strcat('+', reg_type));
+method_name_head = strcat(obj_name, '+', cost_type, ~isempty(reg_type)*strcat('+', reg_type));
 out_name = strcat(method_name_head, isNonNeg*('(NonNeg)'));
 
 for n = 1:length(solv_types)
     solv_type = solv_types{n};
     method_name = strcat(method_name_head, isNonNeg*('(NonNeg)'), '+', solv_type);
+    
     run('DeconvCpx.m');
     
+%     if isGPU; optSolve = gather(optSolve); end   % seems useless
+%     if existsOnGPU(optSolve.xopt); optSolve.xopt = gather(optSolve.xopt); end  % seems useless
     save([data_dir, method_name, '.mat'], 'optSolve');
+%     save(fullfile(pwd,'datafiles/f01.mat'));
     
+        
     if isGPU; temp = gather(optSolve.xopt); else temp = optSolve.xopt; end
     if ~is3D
-        abs(temp); imwrite(uint8(255*mat2gray(abs(temp))), [data_dir, method_name, '_abs.png']);
+        imwrite(uint8(255*mat2gray(abs(temp))), [data_dir, method_name, '_abs.png']);
         imwrite(uint8(255*mat2gray(angle(temp))), [data_dir, method_name, '_phase.png']);
     else
-        figure('Name', 'Deconv'); show3d(abs(temp), 0.01); axis normal; set(gcf,'Position',[0,0,500,500]); saveas(gca, [data_dir, obj_name, method_name, '.png'], 'png');
+        temp = abs(temp); temp = (temp-min(temp(:)))./(max(temp(:))-min(temp(:)));
+        figure('Name', 'Deconv'); show3d(abs(temp), 0.01); axis normal; set(gcf,'Position',[0,0,500,500]); 
+        saveas(gcf, [data_dir,  method_name, '.png']);
     end
     
-
-    solve_lst = dir([data_dir, obj_name, '*.mat']);  run('PlotMult.m');    
-    close all;
-    
-    if isGPU; reset(gpuDevice(1)); end
+%     if isGPU; reset(gpuDevice(1)); end
 end
+
+close all;
+out_name = obj_name;
+solve_lst = dir([data_dir, obj_name, '*.mat']);  
+run('PlotMult.m');
+
