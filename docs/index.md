@@ -4,7 +4,7 @@ title: "Sectional hologram reconstruction through complex deconvolution"
 ---
 
 
-<h2 class="section-title"> Sectional hologram reconstruction through complex deconvolution," Optics and Lasers in Engineering </h2>
+<h2 class="section-title"> Sectional hologram reconstruction through complex deconvolution </h2>
 <h5 class="pubname"> Optics and Lasers in Engineering, 2019 </h5>
 <nav class="text-center" style="width: 100%">
   <a href="https://ni-chen.github.io/" class="author">Ni Chen<sup>1, &dagger;</sup></a>
