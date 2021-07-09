@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ni Chen, Ph.D.</title>
+  <meta name="description"
+    content="">
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+  <link rel="canonical" href="http://localhost:4000/">
+  <link rel="shortcut icon" type="image/x-icon" href="http://localhost:4000/images/favicon.ico">
+
+  <!-- Load KaTex jQuery -->
+  <!-- <script src="//code.jquery.com/jquery-1.11.1.min.js"></script> -->
+  <!-- Load KaTeX -->
+  <!-- <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.1.1/katex.min.css"> -->
+  <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.1.1/katex.min.js"></script> -->
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript">
+  </script>
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-56515654-4"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-56515654-4');
+  </script>
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?0662740a0d2368cc5cfaa508dd843362";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+  
+   <!-- Baidu Analytics -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?0662740a0d2368cc5cfaa508dd843362";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+<script>
+  function ShowOrHide(select='inpress') {
+      // var elem = document.getElementById("btn");
+      var x = document.getElementById('inpress');
+      var y = document.getElementById('byyear');
+      var z = document.getElementById('bytype');
+      var w = document.getElementById('bytalk');
+
+
+      var x_btn = document.getElementById("btn_inpress");
+      var y_btn = document.getElementById("btn_byyear");
+      var z_btn = document.getElementById("btn_bytype");
+      var w_btn = document.getElementById("btn_bytalk");
+
+
+      // document.getElementById(select).display='block';
+      // document.getElementById("btn_"+select).disabled=true;
+
+      if (select == 'inpress') {          
+          x.style.display = 'block';
+          x_btn.disabled = true; 
+          y.style.display = 'none';
+          y_btn.disabled = false;   
+          z.style.display = 'none';
+          z_btn.disabled = false;   
+          w.style.display = 'none';
+          w_btn.disabled = false;   
+          // elem.innerHTML = typetxt;
+      } else if (select == 'byyear'){          
+          x.style.display = 'none';
+          x_btn.disabled = false;  
+          y.style.display = 'block';
+          // y_btn.closest('li').addClass('active');   
+          y_btn.disabled = true;
+          z.style.display = 'none';
+          z_btn.disabled = false;  
+          w.style.display = 'none';
+          w_btn.disabled = false;   
+          // elem.innerHTML = yeartxt;
+      } else if (select == 'bytype'){          
+          x.style.display = 'none';
+          x_btn.disabled = false;  
+          y.style.display = 'none';
+          y_btn.disabled = false;  
+          z.style.display = 'block';
+          z_btn.disabled = true;
+          // z_btn.parents('li').addClass('active').siblings().removeClass('active'); 
+          w.style.display = 'none';
+          w_btn.disabled = false;   
+      }
+      else if (select == 'bytalk'){          
+          x.style.display = 'none';
+          x_btn.disabled = false;  
+          y.style.display = 'none';
+          y_btn.disabled = false;  
+          z.style.display = 'none';
+          z_btn.disabled = false;
+          w.style.display = 'block';
+          w_btn.disabled = true;   
+      }
+  }
+</script>
+
+
+  
+
+  <script>
+  var _hmt = _hmt || [];
+  (function() {
+    var hm = document.createElement("script");
+    hm.src = "//hm.baidu.com/hm.js?";
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(hm, s);
+  })();
+</script>
+
+
+
+
+
+</head>
+
+
+  <body text-align="justify">
+    
+
+    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	<div class="container-fluid">
+		<div class="navbar-header">
+			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+				data-target="#navbar-collapse-1" aria-expanded="false">
+				<span class="sr-only">Toggle navigation</span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+
+			<a class="navbar-brand" href="https://ni-chen.github.io/">Ni Chen, Ph.D.</a>
+		</div>
+		<div class="collapse navbar-collapse" id="navbar-collapse-1">
+			<ul class="nav navbar-nav navbar-right">
+				<li><a href="https://ni-chen.github.io/">About</a></li>
+				<!-- <li><a href="http://localhost:4000/people">People</a></li> -->
+				<!-- <li><a href="http://localhost:4000/vacancies">Vacancies</a></li> -->
+				<li><a href="https://ni-chen.github.io/publications">Publications</a></li>
+				<li><a href="https://ni-chen.github.io/research">Research</a></li>
+				<li><a href="https://ni-chen.github.io/funding">Funding</a></li>
+				<li><a href="https://ni-chen.github.io/resource">Resource</a></li>
+				<!-- <li><a href="http://localhost:4000/posts">Post</a></li> -->
+			</ul>
+		</div>
+	</div>
+</div>
+
+    <div class="container-fluid">
+      <div class="row">
+        <h2 class="section-title"> Sectional hologram reconstruction through complex deconvolution,” Optics and Lasers in Engineering </h2>
+<h5 class="pubname"> Laser &amp; Photonics Reviews, 2021 </h5>
+<nav class="text-center" style="width: 100%">
+  <p><a href="https://ni-chen.github.io/" class="author">Ni Chen<sup>1, †</sup></a>
+  <a href="https://www.eee.hku.hk/~elam/" class="author">Edmund Y. Lam<sup>2</sup></a>
+  <a href="https://www.ece.vt.edu/people/profile/poon" class="author"> T.-C. Poon <sup>3</sup></a>
+  <a href="http://oeqelab.snu.ac.kr/PROF" class="author"> Byoungho Lee <sup>1</sup></a></p>
+</nav>
+<nav>
+  <p><sup>1</sup> Seoul National University
+<br /> <sup>2</sup> The University of Hong Kong
+<br /> <sup>3</sup> Virginia Tech</p>
+</nav>
+
+<section class="container">
+  <abstract>
+<h5 class="section-title">  Abstract  </h5>
+We propose a sectional hologram reconstruction method through complex deconvolution. By taking into account of both amplitude and phase (or real and imaginary parts) of wavefront propagation into the inverse problem model, we can perform more robust and better imaging quality in the sectional holographic reconstructions. The sectional capacity is about six times the diffraction-limited resolution, and the experimental results show that our method can achieve the best imaging quality compared to the state-of-the-art techniques.
+<br /><br />
+</abstract>
+</section>
+
+<!-- Results -->
+<section class="container">
+  <h5 class="section-title"> Some results  </h5>
+  <figure>
+    <p><img src="img/result_conventional.png" alt="framework" style="height: 500px" />
+  <img src="img/result_proposed.png" alt="framework" style="height: 500px" /></p>
+    <figcaption>
+      <p>Fig. 1: Reconstructions of an OSH of a two-layer beads object with conventional and  the proposed method.</p>
+    </figcaption>
+  </figure>
+</section>
+
+<!-- Data -->
+
+<!-- Downloads -->
+<section class="container">
+  <h5 class="section-title">  Downloads </h5>
+  <div class="row" style="padding-left: 36px">
+    <p>The manuscript link <a href="https://doi.org/10.1016/j.optlaseng.2019.105945"> <img src="img/pdf_64x64.png" alt="pdf manuscript" class="smallimg" /></a> | Github project link <a href="https://github.com/Ni-Chen/Sectional-Holographic-Imaging"><img src="img/github_64x64.png" alt="dataset" class="smallimg" />
+</a></p>
+  </div>
+</section>
+
+<section class="container">
+  <h5 class="section-title"> Bibtex </h5>
+  <pre>
+  @article{Chen2019OLE,
+    title   = {Sectional hologram reconstruction through complex deconvolution},
+    journal = {Optics and Lasers in Engineering},
+    volume  = {127},
+    pages   = {105945},
+    year    = {2020},
+    doi     = {10.1016/j.optlaseng.2019.105945},
+    url     = {https://www.sciencedirect.com/science/article/pii/S014381661931084X?via%3Dihub},
+    }
+</pre>
+</section>
+
+
+
+        <script type="text/javascript">
+          // revert publication list number
+          var olists = document.getElementsByTagName('ol');
+          for (var i = 0; i < olists.length; i++) { 
+            // if (!olists[i].className.match(/\breversed\b/)) 
+            //   continue; 
+            var items = olists[i].getElementsByTagName('li'); 
+            for(var j = 0; j < items.length; j++) {
+               items[j].setAttribute("value", items.length - j); 
+            } 
+          }
+
+      </script>
+      </div>
+    </div>
+
+    
+<footer class="sticky-bottom mt-5">
+  <div class="container" style="text-align:center;">
+    &copy; Copyright 2021, Ni Chen
+    <br>
+    Powered by <a href="http://jekyllrb.com/" target="_blank">Jekyll</a> and <a href="https://github.com/inukshuk/jekyll-scholar" target="_blank">Jekyll Scholar</a>
+
+    
+    <!-- | Last updated: July 09, 2021 -->
+    | Last updated: July, 2021
+    
+  </div>
+</footer>
+
+
+
+
+  </body>
+
+</html>
