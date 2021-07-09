@@ -1,6 +1,6 @@
 ---
 layout: default
-title: "Sectional hologram reconstruction through complex deconvolution," Optics and Lasers in Engineering"
+title: "Sectional hologram reconstruction through complex deconvolution"
 ---
 
 
