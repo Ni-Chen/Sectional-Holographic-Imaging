@@ -7,7 +7,7 @@ title: "Sectional hologram reconstruction through complex deconvolution"
 <h2 class="section-title"> Sectional hologram reconstruction through complex deconvolution </h2>
 <h5 class="pubname"> Optics and Lasers in Engineering, 2019 </h5>
 <nav class="text-center" style="width: 100%">
-  <a href="https://ni-chen.github.io/" class="author">Ni Chen<sup>1, &dagger;</sup></a>
+  <a href="https://ni-chen.github.io/" class="author">Ni Chen<sup>1, *;</sup></a>
   <a href="https://www.eee.hku.hk/~elam/" class="author">Edmund Y. Lam<sup>2</sup></a>
   <a href="https://www.ece.vt.edu/people/profile/poon" class="author"> T.-C. Poon <sup>3</sup></a>
   <a href="http://oeqelab.snu.ac.kr/PROF" class="author"> Byoungho Lee <sup>1</sup></a>
